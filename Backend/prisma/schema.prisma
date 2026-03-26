@@ -26,9 +26,11 @@ model Usuarios {
 model Servicios {
   id        Int    @id @default(autoincrement())
   nombre    String
+  descripcion String
   categoria String
   precio    Float
   duracion  Int
+  activo    Boolean @default(true)
 
   turnos Turno[]
 }

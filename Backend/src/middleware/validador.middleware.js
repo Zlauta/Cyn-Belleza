@@ -1,16 +1,15 @@
-export const validarEsquema = (esquema) => (req, res, next) => {
+export const validarEsquema = (esquema) => async (req, res, next) => {
   try {
-    esquema.parse({
-      body: req.body,
-      query: req.query,
-      params: req.params,
-    });
-    next();
+    await esquema.parseAsync(req.body);
+    next(); 
   } catch (error) {
-    return res.status(400).json({
-      exito: false,
-      error: 'Error de validación de datos',
-      detalles: error.errors.map(err => ({ campo: err.path.join('.'), mensaje: err.message }))
-    });
+    if (error.errors) {
+      return res.status(400).json({
+        mensaje: "Error de validación en los datos enviados",
+        errores: error.errors.map((err) => err.message),
+      });
+    }
+    
+    next(error);
   }
 };
