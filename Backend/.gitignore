@@ -132,3 +132,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 /src/generated/prisma
+/src/generated/
+/prisma/generated/
+dist/
