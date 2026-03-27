@@ -1,12 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-
+import Home from '../pages/Home.jsx';
 // Layouts (Estructura visual)
 // Por ahora placeholders, los crearemos en el siguiente paso
 const PublicLayout = ({ children }) => <div>[Navbar Pública] {children} [Footer]</div>;
 const AdminLayout = ({ children }) => <div style={{display: 'flex'}}>[Sidebar Admin] <div style={{flex:1}}>{children}</div></div>;
 
 // Páginas Públicas (Stubs)
-const Home = () => <div>Página de Inicio (Landing)</div>;
 const Login = () => <div>Página de Login</div>;
 const Registro = () => <div>Página de Registro</div>;
 const Servicios = () => <div>Nuestros Servicios (Vista Cliente)</div>;
