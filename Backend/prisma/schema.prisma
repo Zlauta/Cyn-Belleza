@@ -9,7 +9,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Usuarios {
@@ -20,17 +20,17 @@ model Usuarios {
   createdAt   DateTime @default(now())
   rol         Rol      @default(CLIENTE)
 
-  turnosCliente Turno[] @relation("TurnosCliente")
+  turnos Turno[] @relation("Turnos")
 }
 
 model Servicios {
-  id        Int    @id @default(autoincrement())
-  nombre    String
+  id          Int     @id @default(autoincrement())
+  nombre      String
   descripcion String
-  categoria String
-  precio    Float
-  duracion  Int
-  activo    Boolean @default(true)
+  categoria   String
+  precio      Float
+  duracion    Int
+  activo      Boolean @default(true)
 
   turnos Turno[]
 }
@@ -40,8 +40,11 @@ model Turno {
   fechaHora DateTime
   estado    Estado   @default(PENDIENTE)
 
+  stadoPago EstadoPago @default(PENDIENTE)
+  transaccionId String?
+
   clienteId Int
-  cliente   Usuarios @relation("TurnosCliente", fields: [clienteId], references: [id])
+  cliente   Usuarios @relation("Turnos", fields: [clienteId], references: [id])
 
   servicioId Int
   servicio   Servicios @relation(fields: [servicioId], references: [id])
@@ -57,4 +60,10 @@ enum Estado {
 enum Rol {
   ADMIN
   CLIENTE
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  REEMBOLSADO
 }
