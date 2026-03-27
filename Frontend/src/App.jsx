@@ -1,9 +1,10 @@
-import React from 'react'
+import AppRoutes from './routes/AppRoutes';
+import './index.css'; // Asegurate de tener Tailwind importado acá o en index.css
 
-const App = () => {
+function App() {
   return (
-    <div>App</div>
-  )
+    <AppRoutes />
+  );
 }
 
-export default App
+export default App;
