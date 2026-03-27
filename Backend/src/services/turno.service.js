@@ -1,15 +1,15 @@
 import { prisma } from '../db.js';
 
-export const crearTurno = async (usuarioId, datos) => {
+export const crearTurno = async (clienteID, datos) => {
   return await prisma.turno.create({
     data: {
       fechaHora: new Date(datos.fechaHora),
-      usuarioId: parseInt(usuarioId),
+      clienteId: parseInt(clienteID),
       servicioId: parseInt(datos.servicioId)
     },
     include: {
       servicio: true,
-      usuario: { select: { nombre: true, email: true } }
+      cliente: { select: { nombre: true, email: true } }
     }
   });
 };
@@ -19,7 +19,7 @@ export const obtenerTurnos = async (filtro = {}) => {
     where: filtro,
     include: {
       servicio: true,
-      usuario: { select: { nombre: true, email: true, telefono: true } }
+      cliente: { select: { nombre: true, email: true } }
     },
     orderBy: { fechaHora: 'asc' } 
   });
@@ -45,11 +45,11 @@ export const actualizarEstado = async (id, datosActualizacion) => {
 };
 
 // 🔥 LA REGLA DE ORO DE LAS 24 HORAS 🔥
-export const cancelarTurno = async (id, usuarioId, rolUsuario) => {
+export const cancelarTurno = async (id, clienteId, rolUsuario) => {
   const turno = await obtenerTurnoPorId(id);
 
   // 1. Verificamos que el turno le pertenezca a quien lo quiere cancelar (salvo que sea la dueña)
-  if (rolUsuario !== 'ADMIN' && turno.usuarioId !== usuarioId) {
+  if (rolUsuario !== 'ADMIN' && turno.clienteId !== clienteId) {
     throw { status: 403, message: "No tienes permiso para cancelar este turno" };
   }
 
