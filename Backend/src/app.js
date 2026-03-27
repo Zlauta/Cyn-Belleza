@@ -1,15 +1,15 @@
-import express from 'express';
-import cors from 'cors';
-import  routes  from './routes/index.routes.js';
-import { manejadorErrores } from './middleware/manejadorErrores.js';
-import morgan from 'morgan';
+import express from "express";
+import cors from "cors";
+import routes from "./routes/index.routes.js";
+import { manejadorErrores } from "./middleware/manejadorErrores.js";
+import morgan from "morgan";
 
 const app = express();
-
+app.use(express.json());
 // Middlewares globales
 app.use(cors());
-app.use(express.json());
-app.use(morgan('dev'));
+
+app.use(morgan("dev"));
 
 // Rutas
 app.use("/api", routes);

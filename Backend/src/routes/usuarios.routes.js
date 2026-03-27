@@ -8,9 +8,9 @@ export const rutasUsuarios = Router();
 
 // Rutas públicas
 rutasUsuarios.post('/login', validarEsquema(esquemaLoginUsuario), login);
-
+rutasUsuarios.post('/registro', validarEsquema(esquemaRegistroUsuario), registrar);
 // Rutas protegidas (Solo Administrador)
 // Usamos el middleware de validación con Zod para asegurar que los datos de creación vengan perfectos
-rutasUsuarios.post('/registro', verificarToken, esAdministrador, validarEsquema(esquemaRegistroUsuario), registrar);
+
 rutasUsuarios.get('/', verificarToken, esAdministrador, obtenerTodos);
 rutasUsuarios.delete('/:id', verificarToken, esAdministrador, eliminar);
