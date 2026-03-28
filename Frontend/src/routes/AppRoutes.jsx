@@ -1,31 +1,31 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Home from "../pages/Home.jsx";
-import Login from "../pages/Login.jsx";
-import Registro from "../pages/Registro.jsx";
-// Layouts (Estructura visual)
-// Por ahora placeholders, los crearemos en el siguiente paso
-const PublicLayout = ({ children }) => <div>{children}</div>;
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion"; 
+
+import Home from "../pages/Home";
+import Login from "../pages/Login";
+import Registro from "../pages/Registro";
+
+const PublicLayout = ({ children }) => (
+  <div>[Navbar Pública] {children} [Footer]</div>
+);
 const AdminLayout = ({ children }) => (
   <div style={{ display: "flex" }}>
     [Sidebar Admin] <div style={{ flex: 1 }}>{children}</div>
   </div>
 );
 
-// Páginas Públicas (Stubs)
-const Servicios = () => <div>Nuestros Servicios (Vista Cliente)</div>;
+const ServiciosClie = () => <div>Nuestros Servicios (Vista Cliente)</div>;
 const QuienesSomos = () => <div>Quiénes Somos</div>;
 const Reservar = () => <div>Flujo de Reserva de Turno</div>;
 
-// Páginas Admin (Stubs - Protegidas)
 const Dashboard = () => <div>Dashboard General</div>;
 const AdminServicios = () => <div>Gestión de Servicios (CRUD)</div>;
 const AdminUsuarios = () => <div>Gestión de Usuarios</div>;
 const AdminTurnos = () => <div>Gestión de Turnos (Calendario)</div>;
 
-// 🔒 Placeholder para protección de rutas (luego integraremos el Token)
 const RutaProtegida = ({ children }) => {
-  const estaLogueado = true; // Simulación. Cambiar a 'false' para probar redirección.
-  const esAdmin = true; // Simulación.
+  const estaLogueado = true;
+  const esAdmin = true;
 
   if (!estaLogueado || !esAdmin) {
     return <Navigate to="/login" replace />;
@@ -34,10 +34,13 @@ const RutaProtegida = ({ children }) => {
 };
 
 const AppRoutes = () => {
+  const location = useLocation(); // 👉 2. Detectamos en qué ruta estamos
+
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* 🌎 RUTAS PÚBLICAS (Cliente) */}
+    // 👉 3. Envolvemos las rutas. mode="wait" evita que se superpongan.
+    <AnimatePresence mode="wait">
+      {/* Es VITAL pasarle location y key para que AnimatePresence sepa cuándo animar */}
+      <Routes location={location} key={location.pathname}>
         <Route
           path="/"
           element={
@@ -50,7 +53,7 @@ const AppRoutes = () => {
           path="/servicios"
           element={
             <PublicLayout>
-              <Servicios />
+              <ServiciosClie />
             </PublicLayout>
           }
         />
@@ -71,11 +74,9 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Rutas de autenticación (sin layout principal) */}
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
 
-        {/* 🔐 RUTAS PRIVADAS (Admin Cynthia) */}
         <Route
           path="/admin"
           element={
@@ -117,10 +118,9 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Redirección por defecto si la ruta no existe */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </AnimatePresence>
   );
 };
 

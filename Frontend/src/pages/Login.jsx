@@ -32,7 +32,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <motion.div 
+      initial={{ opacity: 0, x: 50 }} 
+      animate={{ opacity: 1, x: 0 }} 
+      exit={{ opacity: 0, x: -50 }} // Sale hacia la izquierda suavemente
+      transition={{ duration: 0.4, ease: "easeInOut" }}
+      className="min-h-screen flex bg-white"
+    >
       {/* 🖼️ Mitad Izquierda: Imagen (Oculta en móviles) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/50 z-10"></div>{" "}
@@ -171,7 +177,7 @@ const Login = () => {
           </p>
         </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

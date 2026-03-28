@@ -38,7 +38,13 @@ const Registro = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-white flex-row-reverse">
+    <motion.div
+      initial={{ opacity: 0, x: -50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 50 }} // Sale hacia la derecha suavemente
+      transition={{ duration: 0.4, ease: "easeInOut" }}
+      className="min-h-screen flex bg-white flex-row-reverse"
+    >
       {/* Mitad Derecha: Imagen decorativa */}
       <div className="hidden lg:flex lg:w-1/2 relative">
         <div className="absolute inset-0 bg-pink-900/20 z-10"></div>
@@ -221,7 +227,7 @@ const Registro = () => {
           </p>
         </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
