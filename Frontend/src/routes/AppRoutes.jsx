@@ -1,13 +1,17 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Home from '../pages/Home.jsx';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Home from "../pages/Home.jsx";
+import Login from "../pages/Login.jsx";
+import Registro from "../pages/Registro.jsx";
 // Layouts (Estructura visual)
 // Por ahora placeholders, los crearemos en el siguiente paso
-const PublicLayout = ({ children }) => <div>[Navbar Pública] {children} [Footer]</div>;
-const AdminLayout = ({ children }) => <div style={{display: 'flex'}}>[Sidebar Admin] <div style={{flex:1}}>{children}</div></div>;
+const PublicLayout = ({ children }) => <div>{children}</div>;
+const AdminLayout = ({ children }) => (
+  <div style={{ display: "flex" }}>
+    [Sidebar Admin] <div style={{ flex: 1 }}>{children}</div>
+  </div>
+);
 
 // Páginas Públicas (Stubs)
-const Login = () => <div>Página de Login</div>;
-const Registro = () => <div>Página de Registro</div>;
 const Servicios = () => <div>Nuestros Servicios (Vista Cliente)</div>;
 const QuienesSomos = () => <div>Quiénes Somos</div>;
 const Reservar = () => <div>Flujo de Reserva de Turno</div>;
@@ -34,36 +38,84 @@ const AppRoutes = () => {
     <BrowserRouter>
       <Routes>
         {/* 🌎 RUTAS PÚBLICAS (Cliente) */}
-        <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-        <Route path="/servicios" element={<PublicLayout><Servicios /></PublicLayout>} />
-        <Route path="/nosotros" element={<PublicLayout><QuienesSomos /></PublicLayout>} />
-        <Route path="/reservar" element={<PublicLayout><Reservar /></PublicLayout>} />
-        
+        <Route
+          path="/"
+          element={
+            <PublicLayout>
+              <Home />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/servicios"
+          element={
+            <PublicLayout>
+              <Servicios />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/nosotros"
+          element={
+            <PublicLayout>
+              <QuienesSomos />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/reservar"
+          element={
+            <PublicLayout>
+              <Reservar />
+            </PublicLayout>
+          }
+        />
+
         {/* Rutas de autenticación (sin layout principal) */}
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
 
         {/* 🔐 RUTAS PRIVADAS (Admin Cynthia) */}
-        <Route path="/admin" element={
-          <RutaProtegida>
-            <AdminLayout><Dashboard /></AdminLayout>
-          </RutaProtegida>
-        } />
-        <Route path="/admin/servicios" element={
-          <RutaProtegida>
-            <AdminLayout><AdminServicios /></AdminLayout>
-          </RutaProtegida>
-        } />
-        <Route path="/admin/usuarios" element={
-          <RutaProtegida>
-            <AdminLayout><AdminUsuarios /></AdminLayout>
-          </RutaProtegida>
-        } />
-        <Route path="/admin/turnos" element={
-          <RutaProtegida>
-            <AdminLayout><AdminTurnos /></AdminLayout>
-          </RutaProtegida>
-        } />
+        <Route
+          path="/admin"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <Dashboard />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/admin/servicios"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <AdminServicios />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/admin/usuarios"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <AdminUsuarios />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/admin/turnos"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <AdminTurnos />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
 
         {/* Redirección por defecto si la ruta no existe */}
         <Route path="*" element={<Navigate to="/" replace />} />
