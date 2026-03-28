@@ -1,27 +1,31 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Home from '../pages/Home.jsx';
-// Layouts (Estructura visual)
-// Por ahora placeholders, los crearemos en el siguiente paso
-const PublicLayout = ({ children }) => <div>[Navbar Pública] {children} [Footer]</div>;
-const AdminLayout = ({ children }) => <div style={{display: 'flex'}}>[Sidebar Admin] <div style={{flex:1}}>{children}</div></div>;
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion"; 
 
-// Páginas Públicas (Stubs)
-const Login = () => <div>Página de Login</div>;
-const Registro = () => <div>Página de Registro</div>;
-const Servicios = () => <div>Nuestros Servicios (Vista Cliente)</div>;
+import Home from "../pages/Home";
+import Login from "../pages/Login";
+import Registro from "../pages/Registro";
+
+const PublicLayout = ({ children }) => (
+  <div>[Navbar Pública] {children} [Footer]</div>
+);
+const AdminLayout = ({ children }) => (
+  <div style={{ display: "flex" }}>
+    [Sidebar Admin] <div style={{ flex: 1 }}>{children}</div>
+  </div>
+);
+
+const ServiciosClie = () => <div>Nuestros Servicios (Vista Cliente)</div>;
 const QuienesSomos = () => <div>Quiénes Somos</div>;
 const Reservar = () => <div>Flujo de Reserva de Turno</div>;
 
-// Páginas Admin (Stubs - Protegidas)
 const Dashboard = () => <div>Dashboard General</div>;
 const AdminServicios = () => <div>Gestión de Servicios (CRUD)</div>;
 const AdminUsuarios = () => <div>Gestión de Usuarios</div>;
 const AdminTurnos = () => <div>Gestión de Turnos (Calendario)</div>;
 
-// 🔒 Placeholder para protección de rutas (luego integraremos el Token)
 const RutaProtegida = ({ children }) => {
-  const estaLogueado = true; // Simulación. Cambiar a 'false' para probar redirección.
-  const esAdmin = true; // Simulación.
+  const estaLogueado = true;
+  const esAdmin = true;
 
   if (!estaLogueado || !esAdmin) {
     return <Navigate to="/login" replace />;
@@ -30,45 +34,93 @@ const RutaProtegida = ({ children }) => {
 };
 
 const AppRoutes = () => {
+  const location = useLocation(); // 👉 2. Detectamos en qué ruta estamos
+
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* 🌎 RUTAS PÚBLICAS (Cliente) */}
-        <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-        <Route path="/servicios" element={<PublicLayout><Servicios /></PublicLayout>} />
-        <Route path="/nosotros" element={<PublicLayout><QuienesSomos /></PublicLayout>} />
-        <Route path="/reservar" element={<PublicLayout><Reservar /></PublicLayout>} />
-        
-        {/* Rutas de autenticación (sin layout principal) */}
+    // 👉 3. Envolvemos las rutas. mode="wait" evita que se superpongan.
+    <AnimatePresence mode="wait">
+      {/* Es VITAL pasarle location y key para que AnimatePresence sepa cuándo animar */}
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/"
+          element={
+            <PublicLayout>
+              <Home />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/servicios"
+          element={
+            <PublicLayout>
+              <ServiciosClie />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/nosotros"
+          element={
+            <PublicLayout>
+              <QuienesSomos />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/reservar"
+          element={
+            <PublicLayout>
+              <Reservar />
+            </PublicLayout>
+          }
+        />
+
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
 
-        {/* 🔐 RUTAS PRIVADAS (Admin Cynthia) */}
-        <Route path="/admin" element={
-          <RutaProtegida>
-            <AdminLayout><Dashboard /></AdminLayout>
-          </RutaProtegida>
-        } />
-        <Route path="/admin/servicios" element={
-          <RutaProtegida>
-            <AdminLayout><AdminServicios /></AdminLayout>
-          </RutaProtegida>
-        } />
-        <Route path="/admin/usuarios" element={
-          <RutaProtegida>
-            <AdminLayout><AdminUsuarios /></AdminLayout>
-          </RutaProtegida>
-        } />
-        <Route path="/admin/turnos" element={
-          <RutaProtegida>
-            <AdminLayout><AdminTurnos /></AdminLayout>
-          </RutaProtegida>
-        } />
+        <Route
+          path="/admin"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <Dashboard />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/admin/servicios"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <AdminServicios />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/admin/usuarios"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <AdminUsuarios />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/admin/turnos"
+          element={
+            <RutaProtegida>
+              <AdminLayout>
+                <AdminTurnos />
+              </AdminLayout>
+            </RutaProtegida>
+          }
+        />
 
-        {/* Redirección por defecto si la ruta no existe */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </AnimatePresence>
   );
 };
 
