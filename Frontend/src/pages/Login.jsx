@@ -1,9 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+
+// 👉 Importamos el servicio en lugar de axios directo
+import { loginService } from "../services/auth.services.js";
 
 const Login = () => {
   const {
@@ -13,36 +16,39 @@ const Login = () => {
   } = useForm();
   const navigate = useNavigate();
 
-  // 👉 Lógica de Submit con Toast de Carga y Éxito
-  const onSubmit = (data) => {
-    // Simulamos una petición al backend (Axios vendrá después)
+  const onSubmit = async (data) => {
     const loadToast = toast.loading("Verificando credenciales...");
-    console.log("Datos de login:", data);
 
-    setTimeout(() => {
-      // Si el email es 'admin@cyn.com', simulamos éxito
-      if (data.email === "admin@cyn.com" && data.contrasenia === "123456") {
-        toast.success("¡Bienvenido/a de nuevo!", { id: loadToast });
-        // Acá guardaríamos el token en localStorage
-        navigate("/"); // Redirigimos al inicio
-      } else {
-        toast.error("Correo o contraseña incorrectos.", { id: loadToast });
+    try {
+      // 1. Llamamos al servicio limpio
+      const respuesta = await loginService(data);
+
+      // 2. Si sale bien, guardamos el token y el usuario
+      localStorage.setItem("token", respuesta.token);
+      if (respuesta.usuario) {
+        localStorage.setItem("usuario", JSON.stringify(respuesta.usuario));
       }
-    }, 2000);
+
+      // 3. Mostramos éxito y redirigimos
+      toast.success("¡Bienvenido/a de nuevo!", { id: loadToast });
+      navigate("/");
+    } catch (error) {
+      // 4. Si falla, el error.message ya viene "limpio" desde el servicio
+      toast.error(error.message, { id: loadToast });
+    }
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, x: 50 }} 
-      animate={{ opacity: 1, x: 0 }} 
-      exit={{ opacity: 0, x: -50 }} // Sale hacia la izquierda suavemente
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
       className="min-h-screen flex bg-white"
     >
-      {/* 🖼️ Mitad Izquierda: Imagen (Oculta en móviles) */}
+      {/* 🖼️ Mitad Izquierda: Imagen */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/50 z-10"></div>{" "}
-        {/* Filtro fucsia/negro */}
+        <div className="absolute inset-0 bg-black/50 z-10"></div>
         <img
           src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=1200"
           alt="Salón de belleza CYN"
@@ -62,15 +68,17 @@ const Login = () => {
       </div>
 
       {/* 📝 Mitad Derecha: Formulario */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
-        {/* 👉 ANIMACIÓN DE ENTRADA DESDE LA DERECHA */}
-        <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 100 }} // Para la transición suave al salir
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-md"
-        >
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative">
+        <div className="w-full max-w-md">
+          {/* BOTÓN DE VOLVER */}
+          <Link
+            to="/"
+            className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-pink-600 transition-colors mb-8 group"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" />
+            Volver al inicio
+          </Link>
+
           <div className="text-center lg:text-left mb-10">
             <Link
               to="/"
@@ -87,7 +95,7 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Input Email con Hook Form e Icono */}
+            {/* Input Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Correo Electrónico
@@ -118,7 +126,7 @@ const Login = () => {
               )}
             </div>
 
-            {/* Input Contraseña con Hook Form e Icono */}
+            {/* Input Contraseña */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-700">
@@ -153,7 +161,6 @@ const Login = () => {
               )}
             </div>
 
-            {/* 👉 BOTÓN COLOREADO (FUCSIA) */}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
@@ -165,7 +172,6 @@ const Login = () => {
             </motion.button>
           </form>
 
-          {/* Enlace al registro (Fucsia) */}
           <p className="mt-10 text-center text-sm text-gray-600 border-t pt-6">
             ¿No tienes una cuenta?{" "}
             <Link
@@ -175,7 +181,7 @@ const Login = () => {
               Regístrate aquí <ArrowRight className="inline h-4 w-4" />
             </Link>
           </p>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );

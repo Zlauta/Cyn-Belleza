@@ -1,15 +1,14 @@
-import { prisma } from '../db.js';
-import argon2 from 'argon2';
-import jwt from 'jsonwebtoken';
-
+import { prisma } from "../db.js";
+import argon2 from "argon2";
+import jwt from "jsonwebtoken";
 
 export const registrarUsuario = async (datos) => {
   const existeEmail = await prisma.usuarios.findUnique({
-    where: { email: datos.email }
+    where: { email: datos.email },
   });
 
   if (existeEmail) {
-    const error = new Error('El email ya está registrado');
+    const error = new Error("El email ya está registrado");
     error.codigoEstado = 400;
     throw error;
   }
@@ -21,28 +20,45 @@ export const registrarUsuario = async (datos) => {
       nombre: datos.nombre,
       email: datos.email,
       contrasenia: contrasenaHasheada,
-      rol: datos.rol || 'CLIENTE'
+      rol: datos.rol || "CLIENTE",
     },
     // No devolvemos la contraseña al frontend
-    select: { id: true, nombre: true, email: true, rol: true } 
+    select: { id: true, nombre: true, email: true, rol: true },
   });
 
-  return nuevoUsuario;
+  const token = jwt.sign(
+    { id: nuevoUsuario.id, rol: nuevoUsuario.rol },
+    process.env.JWT_CLAVE_SECRETA,
+    { expiresIn: "24h" },
+  );
+
+  return {
+    token,
+    usuario: {
+      id: nuevoUsuario.id,
+      nombre: nuevoUsuario.nombre,
+      email: nuevoUsuario.email,
+      rol: nuevoUsuario.rol,
+    },
+  };
 };
 
 export const autenticarUsuario = async (email, contrasenia) => {
   const usuario = await prisma.usuarios.findUnique({ where: { email } });
 
   if (!usuario) {
-    const error = new Error('Credenciales inválidas');
+    const error = new Error("Credenciales inválidas");
     error.codigoEstado = 401;
     throw error;
   }
 
-  const contrasenaValida = await argon2.verify(usuario.contrasenia, contrasenia);
-  
+  const contrasenaValida = await argon2.verify(
+    usuario.contrasenia,
+    contrasenia,
+  );
+
   if (!contrasenaValida) {
-    const error = new Error('Credenciales inválidas');
+    const error = new Error("Credenciales inválidas");
     error.codigoEstado = 401;
     throw error;
   }
@@ -50,24 +66,29 @@ export const autenticarUsuario = async (email, contrasenia) => {
   const token = jwt.sign(
     { id: usuario.id, rol: usuario.rol },
     process.env.JWT_CLAVE_SECRETA,
-    { expiresIn: '24h' }
+    { expiresIn: "24h" },
   );
 
-  return { 
-    token, 
-    usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol } 
+  return {
+    token,
+    usuario: {
+      id: usuario.id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol,
+    },
   };
 };
 
 export const obtenerTodosLosUsuarios = async () => {
   return await prisma.usuarios.findMany({
-    select: { id: true, nombre: true, email: true, rol: true }
+    select: { id: true, nombre: true, email: true, rol: true },
   });
 };
 
 export const eliminarUsuario = async (id) => {
   return await prisma.usuarios.delete({
     where: { id: Number(id) },
-    select: { id: true, nombre: true }
+    select: { id: true, nombre: true },
   });
 };
