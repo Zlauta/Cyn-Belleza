@@ -20,6 +20,8 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const esAdmin = usuario?.rol === "ADMIN";
+
   // 👉 2. USE EFFECT: Revisa el token apenas carga y cada vez que cambiamos de página
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -104,7 +106,7 @@ const Navbar = () => {
             {estaLogueado ? (
               <div className="flex items-center gap-3 border-r pr-4 border-gray-200">
                 <span className="text-sm font-semibold text-gray-700">
-                  Bienvenido/a {usuario?.nombre?.split(" ")[0]}{" "}
+                  Hola, {usuario?.nombre?.split(" ")[0]}{" "}
                   {/* Muestra solo el primer nombre */}
                 </span>
                 <button
@@ -122,6 +124,16 @@ const Navbar = () => {
                 title="Iniciar Sesión"
               >
                 <User className="w-5 h-5" />
+              </Link>
+            )}
+
+            {/* 👉 BOTÓN SECRETO SOLO PARA ADMINS */}
+            {esAdmin && (
+              <Link
+                to="/admin"
+                className="text-pink-600 hover:text-pink-700 font-bold text-sm transition-colors mr-2"
+              >
+                Panel Admin
               </Link>
             )}
 
