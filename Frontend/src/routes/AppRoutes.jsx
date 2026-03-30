@@ -1,9 +1,10 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion"; 
+import { AnimatePresence } from "framer-motion";
 
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Registro from "../pages/Registro";
+import Reservar from "../pages/Reservar";
 
 const PublicLayout = ({ children }) => (
   <div>[Navbar Pública] {children} [Footer]</div>
@@ -16,7 +17,6 @@ const AdminLayout = ({ children }) => (
 
 const ServiciosClie = () => <div>Nuestros Servicios (Vista Cliente)</div>;
 const QuienesSomos = () => <div>Quiénes Somos</div>;
-const Reservar = () => <div>Flujo de Reserva de Turno</div>;
 
 const Dashboard = () => <div>Dashboard General</div>;
 const AdminServicios = () => <div>Gestión de Servicios (CRUD)</div>;
