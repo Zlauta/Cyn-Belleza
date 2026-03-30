@@ -10,6 +10,9 @@ import Footer from "../components/Footer.jsx";
 import Servicios from "../pages/Servicios.jsx";
 import AdminLayout from "../layout/AdminLayout.jsx";
 import Dashboard from "../pages/admin/Dashboard.jsx";
+import AdminServicios from "../pages/admin/AdminServicio.jsx";
+import AdminTurnos from "../pages/admin/AdminTurnos.jsx";
+import AdminUsuarios from "../pages/admin/AdminUsuario.jsx";
 
 const PublicLayout = ({ children }) => (
   <div>
@@ -21,9 +24,6 @@ const PublicLayout = ({ children }) => (
 
 const QuienesSomos = () => <div>Quiénes Somos</div>;
 
-const AdminServicios = () => <div>Gestión de Servicios (CRUD)</div>;
-const AdminUsuarios = () => <div>Gestión de Usuarios</div>;
-const AdminTurnos = () => <div>Gestión de Turnos (Calendario)</div>;
 
 // 👉 EL PATOVICA REAL
 const RutaProtegida = ({ children, requiereAdmin = false }) => {
