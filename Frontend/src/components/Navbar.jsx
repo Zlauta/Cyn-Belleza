@@ -1,23 +1,59 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, User } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, User, LogOut } from "lucide-react";
+import toast from "react-hot-toast";
 
 const LINKS = [
-  { nombre: 'Inicio', ruta: '/' },
-  { nombre: 'Servicios', ruta: '/servicios' },
-  { nombre: 'Nosotros', ruta: '/nosotros' },
+  { nombre: "Inicio", ruta: "/" },
+  { nombre: "Servicios", ruta: "/servicios" },
+  { nombre: "Nosotros", ruta: "/nosotros" },
 ];
 
 const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const location = useLocation(); // Nos dice en qué página estamos
+
+  // 👉 1. CREAMOS LOS ESTADOS
+  const [estaLogueado, setEstaLogueado] = useState(false);
+  const [usuario, setUsuario] = useState(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // 👉 2. USE EFFECT: Revisa el token apenas carga y cada vez que cambiamos de página
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const usuarioString = localStorage.getItem("usuario");
+
+    setEstaLogueado(!!token);
+
+    if (usuarioString) {
+      setUsuario(JSON.parse(usuarioString));
+    } else {
+      setUsuario(null);
+    }
+  }, [location]); // Al poner location, cuando el Login nos mande a '/', esto se actualiza al instante
+
+  const handleLogout = () => {
+    // Borramos de la memoria
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+
+    // 👉 3. Actualizamos el estado para que el Navbar cambie en milisegundos
+    setEstaLogueado(false);
+    setUsuario(null);
+
+    toast.success("¡Sesión cerrada! Esperamos verte pronto.", {
+      icon: "👋",
+    });
+
+    navigate("/");
+  };
 
   return (
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          
           {/* 🌺 LOGO */}
           <Link to="/" className="flex items-center gap-2 group">
             <span className="text-3xl font-black tracking-tighter text-black transition-transform group-hover:scale-105">
@@ -25,27 +61,33 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* 💻 LINKS DESKTOP (Animados) */}
+          {/* 💻 LINKS DESKTOP */}
           <div className="hidden md:flex items-center space-x-2">
             {LINKS.map((link) => {
               const estaActivo = location.pathname === link.ruta;
-              
+
               return (
-                <Link key={link.nombre} to={link.ruta} className="relative px-4 py-2">
-                  {/* El indicador que se desliza suavemente (layoutId es la clave) */}
+                <Link
+                  key={link.nombre}
+                  to={link.ruta}
+                  className="relative px-4 py-2"
+                >
                   {estaActivo && (
                     <motion.div
                       layoutId="burbuja-navbar"
                       className="absolute inset-0 bg-pink-50 rounded-full -z-10"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      transition={{
+                        type: "spring",
+                        bounce: 0.2,
+                        duration: 0.6,
+                      }}
                     />
                   )}
-                  {/* El texto que se agranda y cambia de color */}
                   <motion.span
-                    animate={{ 
-                      color: estaActivo ? '#db2777' : '#4b5563', // pink-600 vs gray-600
+                    animate={{
+                      color: estaActivo ? "#db2777" : "#4b5563",
                       scale: estaActivo ? 1.05 : 1,
-                      fontWeight: estaActivo ? 700 : 500
+                      fontWeight: estaActivo ? 700 : 500,
                     }}
                     className="relative z-10 text-sm block transition-colors hover:text-pink-600"
                   >
@@ -56,13 +98,35 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* 🚀 BOTONES DERECHA (Reservar y Login) */}
+          {/* 🚀 BOTONES DERECHA (Lógica Condicional) */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login" className="text-gray-500 hover:text-pink-600 transition-colors p-2 rounded-full hover:bg-pink-50">
-              <User className="w-5 h-5" />
-            </Link>
+            {/* Si está logueado mostramos saludo y botón de salir, si no, botón de entrar */}
+            {estaLogueado ? (
+              <div className="flex items-center gap-3 border-r pr-4 border-gray-200">
+                <span className="text-sm font-semibold text-gray-700">
+                  Bienvenido/a {usuario?.nombre?.split(" ")[0]}{" "}
+                  {/* Muestra solo el primer nombre */}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"
+                  title="Cerrar Sesión"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="text-gray-500 hover:text-pink-600 transition-colors p-2 rounded-full hover:bg-pink-50"
+                title="Iniciar Sesión"
+              >
+                <User className="w-5 h-5" />
+              </Link>
+            )}
+
             <Link to="/reservar">
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-black text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-black/20 hover:bg-gray-800 transition-colors"
@@ -74,22 +138,26 @@ const Navbar = () => {
 
           {/* 🍔 BOTÓN MENÚ HAMBURGUESA (Móvil) */}
           <div className="md:hidden flex items-center">
-            <button 
+            <button
               onClick={() => setMenuAbierto(!menuAbierto)}
               className="text-gray-600 hover:text-pink-600 focus:outline-none p-2"
             >
-              {menuAbierto ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+              {menuAbierto ? (
+                <X className="w-7 h-7" />
+              ) : (
+                <Menu className="w-7 h-7" />
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* 📱 MENÚ DESPLEGABLE MÓVIL (Animado) */}
+      {/* 📱 MENÚ DESPLEGABLE MÓVIL */}
       <AnimatePresence>
         {menuAbierto && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="md:hidden overflow-hidden bg-white border-t border-gray-100"
@@ -98,27 +166,44 @@ const Navbar = () => {
               {LINKS.map((link) => {
                 const estaActivo = location.pathname === link.ruta;
                 return (
-                  <Link 
-                    key={link.nombre} 
+                  <Link
+                    key={link.nombre}
                     to={link.ruta}
                     onClick={() => setMenuAbierto(false)}
                     className={`block px-4 py-3 rounded-xl text-base font-semibold transition-colors ${
-                      estaActivo ? 'bg-pink-50 text-pink-600' : 'text-gray-600 hover:bg-gray-50'
+                      estaActivo
+                        ? "bg-pink-50 text-pink-600"
+                        : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
                     {link.nombre}
                   </Link>
                 );
               })}
+
               <div className="pt-4 flex flex-col gap-3">
-                <Link 
-                  to="/login"
-                  onClick={() => setMenuAbierto(false)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50"
-                >
-                  <User className="w-5 h-5" /> Mi Cuenta
-                </Link>
-                <Link 
+                {/* Lógica condicional para móvil */}
+                {estaLogueado ? (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMenuAbierto(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-red-100 text-red-500 rounded-xl font-bold hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" /> Cerrar Sesión
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setMenuAbierto(false)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+                  >
+                    <User className="w-5 h-5" /> Mi Cuenta
+                  </Link>
+                )}
+
+                <Link
                   to="/reservar"
                   onClick={() => setMenuAbierto(false)}
                   className="w-full text-center bg-black text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800"
