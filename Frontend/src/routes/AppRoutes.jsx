@@ -8,6 +8,8 @@ import Reservar from "../pages/Reservar";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import Servicios from "../pages/Servicios.jsx";
+import AdminLayout from "../layout/AdminLayout.jsx";
+import Dashboard from "../pages/admin/Dashboard.jsx";
 
 const PublicLayout = ({ children }) => (
   <div>
@@ -16,15 +18,9 @@ const PublicLayout = ({ children }) => (
     <Footer />
   </div>
 );
-const AdminLayout = ({ children }) => (
-  <div style={{ display: "flex" }}>
-    [Sidebar Admin] <div style={{ flex: 1 }}>{children}</div>
-  </div>
-);
 
 const QuienesSomos = () => <div>Quiénes Somos</div>;
 
-const Dashboard = () => <div>Dashboard General</div>;
 const AdminServicios = () => <div>Gestión de Servicios (CRUD)</div>;
 const AdminUsuarios = () => <div>Gestión de Usuarios</div>;
 const AdminTurnos = () => <div>Gestión de Turnos (Calendario)</div>;
