@@ -7,6 +7,7 @@ import Registro from "../pages/Registro";
 import Reservar from "../pages/Reservar";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
+import Servicios from "../pages/Servicios.jsx";
 
 const PublicLayout = ({ children }) => (
   <div>
@@ -21,7 +22,6 @@ const AdminLayout = ({ children }) => (
   </div>
 );
 
-const ServiciosClie = () => <div>Nuestros Servicios (Vista Cliente)</div>;
 const QuienesSomos = () => <div>Quiénes Somos</div>;
 
 const Dashboard = () => <div>Dashboard General</div>;
@@ -59,7 +59,7 @@ const AppRoutes = () => {
           path="/servicios"
           element={
             <PublicLayout>
-              <ServiciosClie />
+              <Servicios />
             </PublicLayout>
           }
         />
