@@ -2,21 +2,6 @@ import React from 'react';
 import Navbar from '../components/Navbar.jsx';
 
 
-const Footer = () => (
-  <footer className="bg-black text-gray-300 mt-16 py-12">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8">
-      <div>
-        <span className="text-xl font-bold text-white">CYN <span className="text-pink-600">Belleza</span></span>
-        <p className="text-sm mt-2">Tu centro de estética de confianza.</p>
-      </div>
-      {/* ... más columnas de footer simulando image_0.png ... */}
-    </div>
-    <div className="text-center text-xs mt-8 border-t border-gray-800 pt-4">
-      © 2024 CYN Belleza. Todos los derechos reservados.
-    </div>
-  </footer>
-);
-
 // Datos simulados para las categorías de image_0.png
 const categorias = [
   { id: 1, nombre: 'Peluquería', imagen: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=400' },
@@ -104,8 +89,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };
