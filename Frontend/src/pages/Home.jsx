@@ -1,29 +1,6 @@
 import React from 'react';
+import Navbar from '../components/Navbar.jsx';
 
-// Componentes temporales (luego los moveremos a src/components)
-const Navbar = () => (
-  <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between h-16 items-center">
-        <div className="flex items-center">
-          {/* Logo simulado de image_0.png */}
-          <span className="text-2xl font-bold text-black">CYN <span className="text-pink-600">Belleza</span></span>
-        </div>
-        <div className="hidden md:flex items-center space-x-8 text-sm text-gray-700">
-          <a href="/servicios" className="hover:text-pink-600">Servicios</a>
-          <a href="#" className="hover:text-pink-600">Promociones</a>
-          <a href="/nosotros" className="hover:text-pink-600">Nosotros</a>
-          <a href="#" className="hover:text-pink-600">Contacto</a>
-        </div>
-        <div>
-          <a href="/reservar" className="bg-pink-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-pink-700 transition duration-150">
-            Reservar Turno
-          </a>
-        </div>
-      </div>
-    </div>
-  </nav>
-);
 
 const Footer = () => (
   <footer className="bg-black text-gray-300 mt-16 py-12">
@@ -51,8 +28,6 @@ const categorias = [
 const Home = () => {
   return (
     <div className="min-h-screen bg-white text-black">
-      <Navbar />
-
       {/* Hero Section (Sección principal con imagen de fondo de image_0.png) */}
       <header className="relative bg-gray-900 text-white">
         {/* Imagen de fondo simulada */}

@@ -5,9 +5,14 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Registro from "../pages/Registro";
 import Reservar from "../pages/Reservar";
+import Navbar from "../components/Navbar.jsx";
 
 const PublicLayout = ({ children }) => (
-  <div>[Navbar Pública] {children} [Footer]</div>
+  <div>
+    <Navbar />
+    {children}
+    [Footer]
+  </div>
 );
 const AdminLayout = ({ children }) => (
   <div style={{ display: "flex" }}>
