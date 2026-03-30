@@ -6,12 +6,13 @@ import Login from "../pages/Login";
 import Registro from "../pages/Registro";
 import Reservar from "../pages/Reservar";
 import Navbar from "../components/Navbar.jsx";
+import Footer from "../components/Footer.jsx";
 
 const PublicLayout = ({ children }) => (
   <div>
     <Navbar />
     {children}
-    [Footer]
+    <Footer />
   </div>
 );
 const AdminLayout = ({ children }) => (
