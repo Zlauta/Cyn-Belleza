@@ -30,13 +30,21 @@ export const VistaTabla = ({ servicios, abrirModal, handleDelete }) => (
             >
               <td className="p-4 pl-6">
                 <div className="flex items-center gap-4">
-                  {/* Placeholder de color en vez de imagen */}
-                  <div className="w-10 h-10 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center font-bold text-lg">
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg ${servicio.estado === "Inactivo" ? "bg-gray-200 text-gray-500" : "bg-pink-100 text-pink-600"}`}
+                  >
                     {servicio.nombre.charAt(0).toUpperCase()}
                   </div>
-                  <span className="font-bold text-gray-900">
-                    {servicio.nombre}
-                  </span>
+                  <div>
+                    <span className="font-bold text-gray-900 block">
+                      {servicio.nombre}
+                    </span>
+                    {servicio.estado === "Inactivo" && (
+                      <span className="text-[10px] uppercase font-black text-red-500">
+                        Fuera de línea
+                      </span>
+                    )}
+                  </div>
                 </div>
               </td>
               <td className="p-4">
@@ -47,7 +55,9 @@ export const VistaTabla = ({ servicios, abrirModal, handleDelete }) => (
               <td className="p-4 font-bold text-gray-900">
                 ${Number(servicio.precio).toLocaleString("es-AR")}
               </td>
-              <td className="p-4 text-sm text-gray-600">{servicio.duracion} Min</td>
+              <td className="p-4 text-sm text-gray-600">
+                {servicio.duracion} Min
+              </td>
               <td className="p-4 pr-6 text-right">
                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
@@ -85,10 +95,17 @@ export const VistaTarjetas = ({ servicios, abrirModal, handleDelete }) => (
       <motion.div
         layout
         key={servicio.id}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col"
+        className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all group flex flex-col ${servicio.estado === "Inactivo" ? "opacity-60 grayscale-[0.8]" : ""}`}
       >
         {/* Encabezado de la tarjeta sin imagen */}
         <div className="h-24 bg-gradient-to-r from-pink-50 to-pink-100 flex items-center justify-center relative border-b border-pink-100">
+          {servicio.estado === "Inactivo" && (
+            <div className="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
+              <span className="bg-white text-gray-900 text-[10px] font-black px-2 py-1 rounded shadow-sm">
+                INACTIVO
+              </span>
+            </div>
+          )}
           <div className="absolute top-3 left-3">
             <span className="text-xs font-bold text-pink-600 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md shadow-sm">
               {servicio.categoria}

@@ -31,6 +31,7 @@ const AdminServicios = () => {
   const [servicios, setServicios] = useState([]);
   const [cargando, setCargando] = useState(true);
 
+  const [estadoFiltro, setEstadoFiltro] = useState('Todos');
   const [vista, setVista] = useState("tabla");
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("Todas");
@@ -109,7 +110,9 @@ const AdminServicios = () => {
     const coincideBusqueda = servicio.nombre
       .toLowerCase()
       .includes(busqueda.toLowerCase());
-    return coincideCategoria && coincideBusqueda;
+    const coincideEstado =
+      estadoFiltro === "Todos" || servicio.estado === estadoFiltro;
+    return coincideCategoria && coincideBusqueda && coincideEstado;
   });
 
   return (
@@ -139,6 +142,8 @@ const AdminServicios = () => {
         categorias={CATEGORIAS}
         vista={vista}
         setVista={setVista}
+        estadoFiltro={estadoFiltro}
+        setEstadoFiltro={setEstadoFiltro}
       />
 
       {cargando ? (
