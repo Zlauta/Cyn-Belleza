@@ -13,10 +13,11 @@ export const crear = async (req, res, next) => {
 
 export const obtenerTodos = async (req, res, next) => {
   try {
-    // Si el usuario es admin (podríamos chequear req.usuario.rol), le mostramos todos.
-    // Por ahora, traemos solo los activos para la vista pública.
-    const servicios = await servicioService.obtenerServicios(true);
-    res.status(200).json(servicios);
+    // 👉 ACÁ ESTÁ EL CAMBIO: Le pasamos 'false' explícitamente
+    // Esto le dice al servicio: "No quiero solo los activos, traeme TODOS"
+    const servicios = await servicioService.obtenerServicios(false);
+
+    res.status(200).json({ exito: true, datos: servicios });
   } catch (error) {
     next(error);
   }
@@ -25,7 +26,7 @@ export const obtenerTodos = async (req, res, next) => {
 export const obtenerPorId = async (req, res, next) => {
   try {
     const servicio = await servicioService.obtenerServicioPorId(req.params.id);
-    res.status(200).json(servicio);
+    res.status(200).json({ exito: true, datos: servicio });
   } catch (error) {
     next(error);
   }
