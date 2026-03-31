@@ -17,23 +17,35 @@ const Login = () => {
   const navigate = useNavigate();
 
   const onSubmit = async (data) => {
-    const loadToast = toast.loading("Verificando credenciales...");
+    const loadToast = toast.loading('Verificando credenciales...');
 
     try {
-      // 1. Llamamos al servicio limpio
       const respuesta = await loginService(data);
+      console.log("👀 DATA DEL BACKEND:", respuesta);
 
-      // 2. Si sale bien, guardamos el token y el usuario
-      localStorage.setItem("token", respuesta.token);
-      if (respuesta.usuario) {
-        localStorage.setItem("usuario", JSON.stringify(respuesta.usuario));
+      // 👉 ACÁ ESTÁ LA MAGIA: Apuntamos a respuesta.datos
+      const tokenGuardar = respuesta.datos?.token || respuesta.token;
+      const usuarioGuardar = respuesta.datos?.usuario || respuesta.usuario;
+
+      if (tokenGuardar) {
+        localStorage.setItem('token', tokenGuardar);
+      } else {
+        toast.error("Error: El servidor no devolvió el token", { id: loadToast });
+        return; // Cortamos la ejecución si no hay token
       }
 
-      // 3. Mostramos éxito y redirigimos
-      toast.success("¡Bienvenido/a de nuevo!", { id: loadToast });
-      navigate("/");
+      if (usuarioGuardar) {
+        // Aseguramos que el rol esté en mayúsculas por si acaso
+        if (usuarioGuardar.rol) {
+          usuarioGuardar.rol = usuarioGuardar.rol.toUpperCase();
+        }
+        localStorage.setItem('usuario', JSON.stringify(usuarioGuardar));
+      }
+
+      toast.success('¡Bienvenido/a de nuevo!', { id: loadToast });
+      navigate('/'); 
+
     } catch (error) {
-      // 4. Si falla, el error.message ya viene "limpio" desde el servicio
       toast.error(error.message, { id: loadToast });
     }
   };

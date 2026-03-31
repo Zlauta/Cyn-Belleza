@@ -8,6 +8,11 @@ import Reservar from "../pages/Reservar";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import Servicios from "../pages/Servicios.jsx";
+import AdminLayout from "../layout/AdminLayout.jsx";
+import Dashboard from "../pages/admin/Dashboard.jsx";
+import AdminServicios from "../pages/admin/AdminServicio.jsx";
+import AdminTurnos from "../pages/admin/AdminTurnos.jsx";
+import AdminUsuarios from "../pages/admin/AdminUsuario.jsx";
 
 const PublicLayout = ({ children }) => (
   <div>
@@ -16,26 +21,29 @@ const PublicLayout = ({ children }) => (
     <Footer />
   </div>
 );
-const AdminLayout = ({ children }) => (
-  <div style={{ display: "flex" }}>
-    [Sidebar Admin] <div style={{ flex: 1 }}>{children}</div>
-  </div>
-);
 
 const QuienesSomos = () => <div>Quiénes Somos</div>;
 
-const Dashboard = () => <div>Dashboard General</div>;
-const AdminServicios = () => <div>Gestión de Servicios (CRUD)</div>;
-const AdminUsuarios = () => <div>Gestión de Usuarios</div>;
-const AdminTurnos = () => <div>Gestión de Turnos (Calendario)</div>;
 
-const RutaProtegida = ({ children }) => {
-  const estaLogueado = true;
-  const esAdmin = true;
+// 👉 EL PATOVICA REAL
+const RutaProtegida = ({ children, requiereAdmin = false }) => {
+  // 1. Buscamos las credenciales
+  const token = localStorage.getItem("token");
+  const usuarioString = localStorage.getItem("usuario");
+  const usuario = usuarioString ? JSON.parse(usuarioString) : null;
 
-  if (!estaLogueado || !esAdmin) {
+  // 2. Si no hay token, lo mandamos al Login directo
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
+
+  // 3. Si la ruta es exclusiva de Admin y el usuario es un Cliente normal
+  // Nota: Asegurate de que en tu base de datos el rol se llame exactamente 'ADMIN'
+  if (requiereAdmin && usuario?.rol !== "ADMIN") {
+    return <Navigate to="/" replace />; // Lo devolvemos al inicio, no tiene permiso
+  }
+
+  // 4. Si pasa todos los filtros, lo dejamos ver la pantalla
   return children;
 };
 
@@ -83,10 +91,11 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
 
+        {/* 🔐 RUTAS PRIVADAS (Admin Cynthia) */}
         <Route
           path="/admin"
           element={
-            <RutaProtegida>
+            <RutaProtegida requiereAdmin={true}>
               <AdminLayout>
                 <Dashboard />
               </AdminLayout>
@@ -96,7 +105,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/servicios"
           element={
-            <RutaProtegida>
+            <RutaProtegida requiereAdmin={true}>
               <AdminLayout>
                 <AdminServicios />
               </AdminLayout>
@@ -106,7 +115,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/usuarios"
           element={
-            <RutaProtegida>
+            <RutaProtegida requiereAdmin={true}>
               <AdminLayout>
                 <AdminUsuarios />
               </AdminLayout>
@@ -116,7 +125,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/turnos"
           element={
-            <RutaProtegida>
+            <RutaProtegida requiereAdmin={true}>
               <AdminLayout>
                 <AdminTurnos />
               </AdminLayout>
