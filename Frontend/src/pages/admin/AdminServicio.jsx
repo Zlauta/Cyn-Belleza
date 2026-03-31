@@ -42,7 +42,11 @@ const AdminServicios = () => {
     try {
       setCargando(true);
       const data = await obtenerServicios();
-      setServicios(data || []);
+      const serviciosMapeados = (data || []).map((servicio) => ({
+        ...servicio,
+        estado: servicio.activo ? "Activo" : "Inactivo",
+      }));
+      setServicios(serviciosMapeados);
     } catch (error) {
       toast.error("Error al cargar servicios: " + error.message);
     } finally {
@@ -64,7 +68,9 @@ const AdminServicios = () => {
       ...data,
       precio: Number(data.precio),
       duracion: Number(data.duracion),
+      activo: data.estado === "Activo",
     };
+    delete datosProcesados.estado;
     const loadToast = toast.loading(
       servicioAEditar ? "Actualizando..." : "Creando...",
     );
