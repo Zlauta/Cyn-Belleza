@@ -100,27 +100,27 @@ const AdminServicios = () => {
   };
 
   // 2. Esta función se ejecuta solo si el usuario hace clic en "Sí, eliminar"
- const confirmarEliminacion = async () => {
+  const confirmarEliminacion = async () => {
     if (!servicioAEliminar) return;
-    
+
     const { id, nombre } = servicioAEliminar;
-    const loadToast = toast.loading('Procesando...');
-    
+    const loadToast = toast.loading("Procesando...");
+
     try {
       // Le pegamos a la ruta de eliminar (que en tu back hace el update a false)
       await eliminarServicio(id);
-      
+
       toast.success(`"${nombre}" fue desactivado.`, { id: loadToast });
-      
+
       // 👉 EL CAMBIO CLAVE: En vez de borrarlo de React, lo pasamos a Inactivo
-      setServicios(servicios.map(s => 
-        s.id === id ? { ...s, estado: 'Inactivo' } : s
-      ));
-      
+      setServicios(
+        servicios.map((s) => (s.id === id ? { ...s, estado: "Inactivo" } : s)),
+      );
+
       setServicioAEliminar(null); // Cerramos el modal
     } catch (error) {
       toast.error(error.message, { id: loadToast });
-      setServicioAEliminar(null); 
+      setServicioAEliminar(null);
     }
   };
 

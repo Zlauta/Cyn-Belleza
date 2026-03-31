@@ -1,11 +1,11 @@
-import clienteAxios from '../api/axios';
-import { atraparError } from '../utils/handlerError.js'; // 👉 Importamos la global
+import clienteAxios from "../api/axios.js";
+import { atraparError } from "../utils/handlerError.js"; // 👉 Importamos la global
 
 // 🟢 LEER TODOS
 export const obtenerServicios = async () => {
   try {
-    const { data } = await clienteAxios.get('/servicios');
-    return data.datos || data; 
+    const { data } = await clienteAxios.get("/servicios");
+    return data.datos || data;
   } catch (error) {
     atraparError(error); // 👉 Usamos la global
   }
@@ -14,7 +14,7 @@ export const obtenerServicios = async () => {
 // 🔵 CREAR
 export const crearServicio = async (datosServicio) => {
   try {
-    const { data } = await clienteAxios.post('/servicios', datosServicio);
+    const { data } = await clienteAxios.post("/servicios", datosServicio);
     return data.datos || data;
   } catch (error) {
     atraparError(error);
