@@ -13,7 +13,10 @@ import {
 
 // 👉 Componentes Hijos
 import ToolbarServicios from "../../components/admin/ToolbarServicios.jsx";
-import { VistaTabla, VistaTarjetas } from "../../components/admin/VistasServicios.jsx";
+import {
+  VistaTabla,
+  VistaTarjetas,
+} from "../../components/admin/VistasServicios.jsx";
 import ModalServicio from "../../components/admin/ModalServicio.jsx";
 
 const CATEGORIAS = [
@@ -57,7 +60,11 @@ const AdminServicios = () => {
   };
 
   const onSubmitForm = async (data) => {
-    const datosProcesados = { ...data, precio: Number(data.precio) };
+    const datosProcesados = {
+      ...data,
+      precio: Number(data.precio),
+      duracion: Number(data.duracion),
+    };
     const loadToast = toast.loading(
       servicioAEditar ? "Actualizando..." : "Creando...",
     );

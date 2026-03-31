@@ -47,7 +47,7 @@ export const VistaTabla = ({ servicios, abrirModal, handleDelete }) => (
               <td className="p-4 font-bold text-gray-900">
                 ${Number(servicio.precio).toLocaleString("es-AR")}
               </td>
-              <td className="p-4 text-sm text-gray-600">{servicio.duracion}</td>
+              <td className="p-4 text-sm text-gray-600">{servicio.duracion} Min</td>
               <td className="p-4 pr-6 text-right">
                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
@@ -109,7 +109,7 @@ export const VistaTarjetas = ({ servicios, abrirModal, handleDelete }) => (
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4 text-gray-400" />
-              <span>{servicio.duracion}</span>
+              <span>{servicio.duracion} Min</span>
             </div>
           </div>
           <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
