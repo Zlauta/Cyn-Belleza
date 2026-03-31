@@ -18,6 +18,7 @@ import {
   VistaTarjetas,
 } from "../../components/admin/VistasServicios.jsx";
 import ModalServicio from "../../components/admin/ModalServicio.jsx";
+import ModalConfirmacion from "../../components/admin/ModalConfirmacion.jsx";
 
 const CATEGORIAS = [
   "Todas",
@@ -31,11 +32,12 @@ const AdminServicios = () => {
   const [servicios, setServicios] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  const [estadoFiltro, setEstadoFiltro] = useState('Todos');
+  const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [vista, setVista] = useState("tabla");
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("Todas");
 
+  const [servicioAEliminar, setServicioAEliminar] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [servicioAEditar, setServicioAEditar] = useState(null);
 
@@ -92,15 +94,33 @@ const AdminServicios = () => {
     }
   };
 
-  const handleDelete = async (id, nombre) => {
-    if (!window.confirm(`¿Seguro que deseas eliminar "${nombre}"?`)) return;
-    const loadToast = toast.loading("Eliminando...");
+  // 1. Esta función solo abre el modal y guarda qué servicio queremos borrar
+  const solicitarEliminacion = (id, nombre) => {
+    setServicioAEliminar({ id, nombre });
+  };
+
+  // 2. Esta función se ejecuta solo si el usuario hace clic en "Sí, eliminar"
+ const confirmarEliminacion = async () => {
+    if (!servicioAEliminar) return;
+    
+    const { id, nombre } = servicioAEliminar;
+    const loadToast = toast.loading('Procesando...');
+    
     try {
+      // Le pegamos a la ruta de eliminar (que en tu back hace el update a false)
       await eliminarServicio(id);
-      toast.success("Servicio eliminado", { id: loadToast });
-      setServicios(servicios.filter((s) => s.id !== id));
+      
+      toast.success(`"${nombre}" fue desactivado.`, { id: loadToast });
+      
+      // 👉 EL CAMBIO CLAVE: En vez de borrarlo de React, lo pasamos a Inactivo
+      setServicios(servicios.map(s => 
+        s.id === id ? { ...s, estado: 'Inactivo' } : s
+      ));
+      
+      setServicioAEliminar(null); // Cerramos el modal
     } catch (error) {
       toast.error(error.message, { id: loadToast });
+      setServicioAEliminar(null); 
     }
   };
 
@@ -168,13 +188,13 @@ const AdminServicios = () => {
             <VistaTabla
               servicios={serviciosFiltrados}
               abrirModal={abrirModal}
-              handleDelete={handleDelete}
+              handleDelete={solicitarEliminacion}
             />
           ) : (
             <VistaTarjetas
               servicios={serviciosFiltrados}
               abrirModal={abrirModal}
-              handleDelete={handleDelete}
+              handleDelete={solicitarEliminacion}
             />
           )}
         </AnimatePresence>
@@ -186,6 +206,14 @@ const AdminServicios = () => {
         servicioAEditar={servicioAEditar}
         onSubmitForm={onSubmitForm}
         categorias={CATEGORIAS}
+      />
+
+      <ModalConfirmacion
+        abierto={!!servicioAEliminar}
+        cerrar={() => setServicioAEliminar(null)}
+        confirmar={confirmarEliminacion}
+        titulo="¿Desactivar Servicio?"
+        mensaje={`Estás a punto de desactivar "${servicioAEliminar?.nombre}". Estas seguro?`}
       />
     </div>
   );
