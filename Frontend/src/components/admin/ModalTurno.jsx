@@ -1,30 +1,55 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
-import { format, addMonths } from "date-fns"; // 👉 Usamos date-fns para calcular los límites
+import { format, addMonths } from "date-fns";
+import { obtenerServicios } from "../../services/servicio.service.js"; // 👉 Importamos el servicio
 
 const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
   const { register, handleSubmit, reset } = useForm();
+  const [listaServicios, setListaServicios] = useState([]);
 
-  // 🗓️ LÓGICA DE LÍMITES DE FECHA
-  const hoyStr = format(new Date(), "yyyy-MM-dd"); // Fecha mínima (hoy)
-  const maxMeseStr = format(addMonths(new Date(), 1), "yyyy-MM-dd"); // Fecha máxima (hoy + 1 mes)
+  const hoyStr = format(new Date(), "yyyy-MM-dd");
+  const maxMeseStr = format(addMonths(new Date(), 2), "yyyy-MM-dd");
+
+  // 👉 Cargamos los servicios apenas se abre el componente
+  useEffect(() => {
+    obtenerServicios().then((data) => {
+      // Filtramos para mostrar solo los activos en el select
+      setListaServicios(
+        (data || []).filter((s) => s.estado === "Activo" || s.activo === true),
+      );
+    });
+  }, []);
 
   useEffect(() => {
     if (turnoAEditar) {
-      // Si editamos, formateamos la fecha para que el input type="date" la entienda
       const fechaFormateada =
         typeof turnoAEditar.fecha === "string"
           ? turnoAEditar.fecha.split("T")[0]
-          : format(new Date(turnoAEditar.fecha), "yyyy-MM-dd");
+          : format(
+              new Date(turnoAEditar.fechaObj || turnoAEditar.fechaHora),
+              "yyyy-MM-dd",
+            );
 
-      reset({ ...turnoAEditar, fecha: fechaFormateada });
+      const horaFormateada =
+        typeof turnoAEditar.hora === "string"
+          ? turnoAEditar.hora
+          : format(
+              new Date(turnoAEditar.fechaObj || turnoAEditar.fechaHora),
+              "HH:mm",
+            );
+
+      reset({
+        ...turnoAEditar,
+        fecha: fechaFormateada,
+        hora: horaFormateada,
+        servicioId: turnoAEditar.servicioId,
+      });
     } else {
       reset({
         cliente: "",
-        servicio: "",
-        profesional: "",
+        servicioId: "",
         fecha: hoyStr,
         hora: "10:00",
         estado: "PENDIENTE",
@@ -78,17 +103,23 @@ const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1">
                     Servicio
                   </label>
-                  <input
-                    {...register("servicio", { required: true })}
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500"
-                    placeholder="Ej: Corte y Brushing"
-                  />
+                  {/* 👉 Ahora es un select que devuelve un servicioId */}
+                  <select
+                    {...register("servicioId", { required: true })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 bg-white"
+                  >
+                    <option value="">Seleccionar...</option>
+                    {listaServicios.map((serv) => (
+                      <option key={serv.id} value={serv.id}>
+                        {serv.nombre}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -97,7 +128,6 @@ const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
                   <label className="block text-sm font-bold text-gray-700 mb-1">
                     Fecha
                   </label>
-                  {/* 👉 ACÁ ESTÁ EL BLOQUEO DE 2 MESES */}
                   <input
                     {...register("fecha", { required: true })}
                     type="date"

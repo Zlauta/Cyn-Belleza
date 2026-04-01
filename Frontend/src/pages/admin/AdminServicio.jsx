@@ -9,7 +9,7 @@ import {
   crearServicio,
   actualizarServicio,
   eliminarServicio,
-} from "../../services/servicio.services.js";
+} from "../../services/servicio.service.js";
 
 // 👉 Componentes Hijos
 import ToolbarServicios from "../../components/admin/ToolbarServicios.jsx";

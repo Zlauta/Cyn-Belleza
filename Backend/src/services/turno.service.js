@@ -34,6 +34,32 @@ export const obtenerTurnoPorId = async (id) => {
   return turno;
 };
 
+// 🔥 EDICIÓN COMPLETA (Solo para Admin) 🔥
+export const actualizarTurnoCompleto = async (id, datos) => {
+  // 1. Verificamos que el turno exista
+  await obtenerTurnoPorId(id);
+
+  // 2. Armamos el paquete de actualización dinámico
+  const dataActualizada = {};
+  
+  if (datos.fechaHora) dataActualizada.fechaHora = new Date(datos.fechaHora);
+  if (datos.servicioId) dataActualizada.servicioId = parseInt(datos.servicioId);
+  if (datos.estado) dataActualizada.estado = datos.estado;
+  
+  // Opcional: si tu mamá también puede cambiar de cliente en el turno
+  if (datos.clienteId) dataActualizada.clienteId = parseInt(datos.clienteId);
+
+  // 3. Guardamos en Prisma y devolvemos el turno con sus relaciones
+  return await prisma.turno.update({
+    where: { id: parseInt(id) },
+    data: dataActualizada,
+    include: {
+      servicio: true,
+      cliente: { select: { nombre: true, email: true } }
+    }
+  });
+};
+
 // Esta es la función que usará tu mamá manualmente, o Mercado Pago automáticamente
 export const actualizarEstado = async (id, datosActualizacion) => {
   await obtenerTurnoPorId(id);

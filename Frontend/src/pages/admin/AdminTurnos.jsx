@@ -9,7 +9,7 @@ import {
   obtenerTurnos,
   crearTurno,
   actualizarTurno,
-  eliminarTurno,
+  cancelarTurnoService,
 } from "../../services/turno.services.js";
 
 // 👉 Importamos los componentes hijos
@@ -33,19 +33,34 @@ const AdminTurnos = () => {
     try {
       setCargando(true);
       const data = await obtenerTurnos();
-      const turnosProcesados = (data || []).map((t) => ({
-        ...t,
-        fechaObj:
-          typeof t.fecha === "string" ? parseISO(t.fecha) : new Date(t.fecha),
-        iniciales: t.cliente
-          ? t.cliente
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .substring(0, 2)
-              .toUpperCase()
-          : "C",
-      }));
+
+      const turnosProcesados = (data || []).map((t) => {
+        // 1. Parseamos la fecha ISO del backend
+        const fechaObj = t.fechaHora ? parseISO(t.fechaHora) : new Date();
+
+        // 2. Extraemos los textos de adentro de los objetos (con fallback por si vienen vacíos)
+        const nombreCliente = t.cliente?.nombre || "Cliente Anónimo";
+        const nombreServicio = t.servicio?.nombre || "Servicio";
+
+        // 3. Extraemos la hora para mostrar en la pastillita y la tabla
+        const horaFormateada = format(fechaObj, "HH:mm");
+
+        return {
+          ...t,
+          fechaObj, // El objeto fecha para el calendario
+          hora: horaFormateada, // "15:30"
+          cliente: nombreCliente, // "Cinthia Brandan" (Pisamos el objeto con el string)
+          servicio: nombreServicio, // "Corte y Brashing" (Pisamos el objeto con el string)
+          // Generamos las iniciales con el nombre que acabamos de extraer
+          iniciales: nombreCliente
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase(),
+        };
+      });
+
       setTurnos(turnosProcesados);
     } catch (error) {
       toast.error("Error al cargar la agenda: " + error.message);
@@ -68,16 +83,32 @@ const AdminTurnos = () => {
   };
 
   const onSubmitForm = async (data) => {
-    const loadToast = toast.loading(
-      turnoAEditar ? "Actualizando..." : "Agendando...",
-    );
-    try {
-      if (turnoAEditar) await actualizarTurno(turnoAEditar.id, data);
-      else await crearTurno(data);
+    // 1. Unimos la Fecha y la Hora SIEMPRE (tanto para crear como para editar)
+    const fechaHoraUnida = new Date(`${data.fecha}T${data.hora}:00`);
 
-      toast.success(turnoAEditar ? "Turno actualizado" : "Turno agendado", {
-        id: loadToast,
-      });
+    // 2. Armamos el paquete completo
+    const payload = {
+      cliente: data.cliente,
+      profesional: data.profesional,
+      estado: data.estado,
+      servicioId: Number(data.servicioId),
+      fechaHora: fechaHoraUnida.toISOString(),
+    };
+
+    const loadToast = toast.loading(
+      turnoAEditar ? "Actualizando turno..." : "Agendando...",
+    );
+
+    try {
+      if (turnoAEditar) {
+        // 👉 Usamos la función genérica que manda el payload completo
+        await actualizarTurno(turnoAEditar.id, payload);
+        toast.success("Turno actualizado por completo", { id: loadToast });
+      } else {
+        await crearTurno(payload);
+        toast.success("Turno agendado", { id: loadToast });
+      }
+
       setModalAbierto(false);
       cargarDatos();
     } catch (error) {
@@ -89,7 +120,9 @@ const AdminTurnos = () => {
     if (!turnoAEliminar) return;
     const loadToast = toast.loading("Cancelando turno...");
     try {
-      await eliminarTurno(turnoAEliminar.id);
+      // 👉 Usamos el nuevo servicio
+      await cancelarTurnoService(turnoAEliminar.id);
+
       toast.success("Turno cancelado", { id: loadToast });
       setTurnos(
         turnos.map((t) =>

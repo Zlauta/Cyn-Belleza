@@ -48,6 +48,15 @@ export const cancelar = async (req, res, next) => {
   }
 };
 
+export const actualizarTurnoCompleto = async (req, res, next) => {
+  try {
+    const turnoActualizado = await turnoService.actualizarTurnoCompleto(req.params.id, req.body);
+    res.status(200).json({ exito: true, datos: turnoActualizado });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const actualizarEstado = async (req, res, next) => {
   try {
     // Esta ruta la va a usar tu mamá (Admin) o Mercado Pago

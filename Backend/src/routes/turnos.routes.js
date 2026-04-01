@@ -17,3 +17,5 @@ rutasTurnos.patch('/:id/cancelar', turnoController.cancelar); // Usamos PATCH po
 // Solo para la dueña del salón (o futuros webhooks de Mercado Pago)
 rutasTurnos.patch('/:id/estado', esAdministrador, validarEsquema(actualizarEstadoTurnoSchema), turnoController.actualizarEstado);
 
+rutasTurnos.put('/:id', esAdministrador, turnoController.actualizarTurnoCompleto);
+
