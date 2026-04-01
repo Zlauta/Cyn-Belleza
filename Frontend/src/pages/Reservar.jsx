@@ -1,64 +1,19 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Calendar as CalendarIcon,
-  Clock,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import {
-  format,
-  addDays,
-  startOfToday,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
-  addMonths,
-  subMonths,
-} from "date-fns";
-import { es } from "date-fns/locale";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { startOfToday } from "date-fns";
+import { toast } from "react-hot-toast";
+import SelectorServicios from "../components/cliente/SelectorServicios.jsx";
+import SelectorFechaHora from "../components/cliente/SelectorFechaHora.jsx";
+import ResumenReserva from "../components/cliente/ResumenReserva.jsx";
 
-const SERVICIOS_MOCK = [
-  {
-    id: 1,
-    nombre: "Corte, Color y Tratamientos",
-    precio: 65000,
-    duracion: "90 min",
-    imagen:
-      "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=300",
-  },
-  {
-    id: 2,
-    nombre: "Uñas Acrílicas",
-    precio: 15000,
-    duracion: "60 min",
-    imagen:
-      "https://images.unsplash.com/photo-1604654894610-df490668710d?q=80&w=300",
-  },
-  {
-    id: 3,
-    nombre: "Lifting Pestañas",
-    precio: 18000,
-    duracion: "45 min",
-    imagen:
-      "https://images.unsplash.com/photo-1583011319767-464a4c16c805?q=80&w=300",
-  },
-  {
-    id: 4,
-    nombre: "Maquillaje Social",
-    precio: 25000,
-    duracion: "60 min",
-    imagen:
-      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=300",
-  },
-];
+// Importamos nuestro nuevo service
+import {
+  obtenerServiciosPublicos,
+  crearReservaPublica,
+} from "../services/reservas.service.js";
 
-const HORARIOS_MOCK = [
+// Mock de horarios fijos (Si después querés, conectamos esto también al back para ver disponibilidad real)
+const HORARIOS_DISPONIBLES = [
   "09:00",
   "10:00",
   "11:30",
@@ -70,37 +25,139 @@ const HORARIOS_MOCK = [
 
 const Reservar = () => {
   const hoy = startOfToday();
+
+  // Estados de Datos del Backend
+  const [categoriasServicios, setCategoriasServicios] = useState([]);
+  const [cargandoDatos, setCargandoDatos] = useState(true);
+  const [enviandoReserva, setEnviandoReserva] = useState(false);
+  const [reservaExitosa, setReservaExitosa] = useState(false);
+
+  // Estados del Formulario
   const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoy);
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
 
-  // 👉 NUEVO ESTADO: Para saber qué mes estamos mirando en el calendario
-  const [mesActual, setMesActual] = useState(hoy);
+  // 👉 AL CARGAR LA PÁGINA: Traemos los servicios del backend
+  useEffect(() => {
+    const cargarServicios = async () => {
+      try {
+        setCargandoDatos(true);
+        const serviciosDb = await obtenerServiciosPublicos();
 
-  // 👉 LÓGICA DEL CALENDARIO COMPLETO
-  const primerDiaDelMes = startOfMonth(mesActual);
-  const ultimoDiaDelMes = endOfMonth(mesActual);
-  const fechaInicio = startOfWeek(primerDiaDelMes, { weekStartsOn: 1 }); // Empezamos el Lunes
-  const fechaFin = endOfWeek(ultimoDiaDelMes, { weekStartsOn: 1 });
+        if (serviciosDb) {
+          // Lógica para agrupar el array plano en categorías: { "Peluquería": [...], "Uñas": [...] }
+          const agrupados = serviciosDb.reduce((acc, servicio) => {
+            const cat = servicio.categoria || "Otros Servicios";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(servicio);
+            return acc;
+          }, {});
 
-  const diasDelMes = eachDayOfInterval({ start: fechaInicio, end: fechaFin });
+          // Lo convertimos al formato que espera nuestro SelectorServicios
+          const arrayCategorias = Object.keys(agrupados).map((cat) => ({
+            categoria: cat,
+            servicios: agrupados[cat],
+          }));
 
-  const mesAnterior = () => setMesActual(subMonths(mesActual, 1));
-  const mesSiguiente = () => setMesActual(addMonths(mesActual, 1));
+          setCategoriasServicios(arrayCategorias);
+        }
+      } catch (error) {
+        toast.error("Hubo un problema al cargar los servicios.");
+      } finally {
+        setCargandoDatos(false);
+      }
+    };
 
-  const diasSemana = ["L", "M", "M", "J", "V", "S", "D"];
+    cargarServicios();
+  }, []);
+
+  const resetearReserva = () => {
+    setServicioSeleccionado(null);
+    setHorarioSeleccionado(null);
+    setFechaSeleccionada(hoy);
+  };
+
+  // 👉 EL POST AL BACKEND
+  const confirmarReserva = async (datosCliente) => {
+    setEnviandoReserva(true);
+    const loadToast = toast.loading("Procesando tu reserva...");
+
+    // Unimos la fecha seleccionada con la hora seleccionada
+    const fechaHoraUnida = new Date(fechaSeleccionada);
+    const [horas, minutos] = horarioSeleccionado.split(":");
+    fechaHoraUnida.setHours(parseInt(horas), parseInt(minutos), 0);
+
+    const payload = {
+      servicioId: servicioSeleccionado.id,
+      fechaHora: fechaHoraUnida.toISOString(),
+      estado: "PENDIENTE", // Entra como pendiente hasta que Cynthia lo confirme
+      clienteManual: `${datosCliente.nombre} - Tel: ${datosCliente.telefono}`,
+    };
+
+    try {
+      await crearReservaPublica(payload);
+      toast.success("¡Reserva confirmada con éxito!", { id: loadToast });
+      setReservaExitosa(true);
+    } catch (error) {
+      toast.error("No se pudo completar la reserva. Intenta de nuevo.", {
+        id: loadToast,
+      });
+      setEnviandoReserva(false);
+    }
+  };
+
+  // PANTALLA DE ÉXITO
+  if (reservaExitosa) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          // 👉 AGREGAMOS overflow-x-hidden ACÁ:
+          className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans pb-32 overflow-x-hidden"
+        >
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg
+              className="w-10 h-10"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 mb-2">
+            ¡Todo Listo!
+          </h2>
+          <p className="text-gray-500 mb-8">
+            Tu turno fue agendado correctamente. Te esperamos en el salón.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full py-4 bg-pink-600 text-white rounded-xl font-bold hover:bg-pink-700 transition-colors"
+          >
+            Volver al inicio
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
-      className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans pb-32"
     >
       <div className="max-w-5xl mx-auto space-y-12">
-        {/* Encabezado */}
-        <div>
+        <div className="text-center md:text-left">
           <h1 className="text-4xl font-extrabold text-pink-600 mb-2">
             Reserva tu Experiencia
           </h1>
@@ -109,218 +166,44 @@ const Reservar = () => {
           </p>
         </div>
 
-        {/* PASO 1: Servicios */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="bg-pink-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-              1
-            </span>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Selecciona un Servicio
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {SERVICIOS_MOCK.map((srv) => (
-              <div
-                key={srv.id}
-                onClick={() => setServicioSeleccionado(srv)}
-                className={`cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-200 ${
-                  servicioSeleccionado?.id === srv.id
-                    ? "border-pink-600 shadow-md ring-2 ring-pink-100"
-                    : "border-transparent bg-white shadow-sm hover:shadow-md hover:border-pink-200"
-                }`}
-              >
-                <div className="aspect-square w-full">
-                  <img
-                    src={srv.imagen}
-                    alt={srv.nombre}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4 text-center">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    {srv.nombre}
-                  </h3>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* PASO 2 y 3: Fecha y Hora (Grid de 2 columnas) */}
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* 👉 COLUMNA FECHA (CALENDARIO COMPLETO) */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <span className="bg-pink-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                2
-              </span>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Selecciona Fecha
-              </h2>
-            </div>
-
-            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-              {/* Controles del Mes */}
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="font-bold text-xl text-gray-900 capitalize">
-                  {format(mesActual, "MMMM yyyy", { locale: es })}
-                </h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={mesAnterior}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={mesSiguiente}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Días de la semana */}
-              <div className="grid grid-cols-7 gap-1 text-center mb-4">
-                {diasSemana.map((dia) => (
-                  <div
-                    key={dia}
-                    className="text-sm font-semibold text-gray-400"
-                  >
-                    {dia}
-                  </div>
-                ))}
-              </div>
-
-              {/* Cuadrícula de Días */}
-              <div className="grid grid-cols-7 gap-y-2 gap-x-1">
-                {diasDelMes.map((dia, idx) => {
-                  const esMesActual = isSameMonth(dia, mesActual);
-                  const esSeleccionado = isSameDay(dia, fechaSeleccionada);
-                  const esPasado = dia < hoy && !isSameDay(dia, hoy);
-
-                  return (
-                    <button
-                      key={dia.toString()}
-                      onClick={() => !esPasado && setFechaSeleccionada(dia)}
-                      disabled={esPasado}
-                      className={`
-                        aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all
-                        ${!esMesActual ? "text-gray-300" : "text-gray-700"}
-                        ${esSeleccionado ? "bg-pink-600 text-white shadow-md" : ""}
-                        ${!esSeleccionado && !esPasado ? "hover:bg-pink-50 hover:text-pink-600" : ""}
-                        ${esPasado && !esSeleccionado ? "opacity-40 cursor-not-allowed" : ""}
-                      `}
-                    >
-                      {format(dia, "d")}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
-          {/* COLUMNA HORARIO */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <span className="bg-pink-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                3
-              </span>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Horario Disponible
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-              {HORARIOS_MOCK.map((hora) => (
-                <button
-                  key={hora}
-                  onClick={() => setHorarioSeleccionado(hora)}
-                  className={`py-4 px-4 rounded-xl border font-semibold transition-all ${
-                    horarioSeleccionado === hora
-                      ? "bg-pink-600 border-pink-600 text-white shadow-md"
-                      : "bg-white border-gray-200 text-gray-700 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600"
-                  }`}
-                >
-                  {hora}
-                </button>
-              ))}
-            </div>
-            {servicioSeleccionado && (
-              <p className="text-sm text-gray-500 mt-6 flex items-center gap-2 bg-gray-100 p-3 rounded-lg w-fit">
-                <Clock className="w-4 h-4 text-pink-600" />
-                Duración estimada:{" "}
-                <span className="font-semibold">
-                  {servicioSeleccionado.duracion}
-                </span>
-              </p>
-            )}
-          </section>
-        </div>
-
-        {/* RESUMEN FINAL */}
-        {servicioSeleccionado && horarioSeleccionado && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="bg-pink-50 border border-pink-100 p-6 md:p-8 rounded-3xl mt-12 shadow-sm"
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <CheckCircle className="text-pink-600 w-6 h-6" />
-              <h3 className="text-2xl font-bold text-gray-900">
-                Resumen de tu Reserva
-              </h3>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div>
-                <p className="text-xs text-pink-600 font-bold uppercase tracking-wider mb-1">
-                  Servicio
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {servicioSeleccionado.nombre}
-                </p>
-                <p className="text-gray-600 font-medium mt-1">
-                  ${servicioSeleccionado.precio.toLocaleString("es-AR")}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-pink-600 font-bold uppercase tracking-wider mb-1">
-                  Fecha y Hora
-                </p>
-                <p className="text-xl font-bold text-gray-900 capitalize">
-                  {format(fechaSeleccionada, "EEEE, d 'de' MMMM", {
-                    locale: es,
-                  })}
-                </p>
-                <p className="text-gray-600 font-medium mt-1">
-                  {horarioSeleccionado} hs
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="flex-1 bg-pink-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-pink-700 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                CONFIRMAR RESERVA
-              </button>
-              <button
-                onClick={() => {
-                  setServicioSeleccionado(null);
-                  setHorarioSeleccionado(null);
-                }}
-                className="sm:w-1/3 bg-white border-2 border-pink-200 text-pink-600 py-4 rounded-xl font-bold text-lg hover:bg-pink-50 transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-            <p className="text-center text-sm text-gray-500 mt-6">
-              Recibirás un email y un mensaje de WhatsApp con la confirmación de
-              tu cita.
+        {cargandoDatos ? (
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
+            <p className="text-gray-500 mt-4 font-medium">
+              Cargando catálogo de servicios...
             </p>
-          </motion.div>
+          </div>
+        ) : (
+          <>
+            <SelectorServicios
+              categorias={categoriasServicios}
+              servicioSeleccionado={servicioSeleccionado}
+              setServicioSeleccionado={setServicioSeleccionado}
+            />
+
+            <SelectorFechaHora
+              fechaSeleccionada={fechaSeleccionada}
+              setFechaSeleccionada={setFechaSeleccionada}
+              horarioSeleccionado={horarioSeleccionado}
+              setHorarioSeleccionado={setHorarioSeleccionado}
+              horariosDisponibles={HORARIOS_DISPONIBLES}
+              servicioSeleccionado={servicioSeleccionado}
+              hoy={hoy}
+            />
+
+            <AnimatePresence>
+              {servicioSeleccionado && horarioSeleccionado && (
+                <ResumenReserva
+                  servicio={servicioSeleccionado}
+                  fecha={fechaSeleccionada}
+                  hora={horarioSeleccionado}
+                  onConfirmar={confirmarReserva}
+                  onCancelar={resetearReserva}
+                  cargando={enviandoReserva}
+                />
+              )}
+            </AnimatePresence>
+          </>
         )}
       </div>
     </motion.div>
