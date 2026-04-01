@@ -1,47 +1,44 @@
 export const atraparError = (error) => {
-  let mensajeError = "Error de conexión con el servidor.";
+  let mensaje = "Error de conexión con el servidor.";
 
-  if (error.response?.data) {
+  if (error.response && error.response.data) {
     const data = error.response.data;
 
-    try {
-      const parsedData = typeof data === "string" ? JSON.parse(data) : data;
-
-      if (
-        Array.isArray(parsedData) &&
-        parsedData.length > 0 &&
-        parsedData[0].message
-      ) {
-        mensajeError = parsedData[0].message;
-      } else if (
-        parsedData.errors &&
-        Array.isArray(parsedData.errors) &&
-        parsedData.errors.length > 0
-      ) {
-        mensajeError = parsedData.errors[0].message;
-      } else if (parsedData.error || parsedData.mensaje || parsedData.message) {
-        mensajeError =
-          parsedData.error || parsedData.mensaje || parsedData.message;
+    // 1. Si Zod manda un array directo (tu error actual)
+    if (Array.isArray(data)) {
+      mensaje = data.map((e) => e.message || e.error).join(", ");
+    }
+    // 2. Si viene envuelto en { errors: [...] }
+    else if (data.errors && Array.isArray(data.errors)) {
+      mensaje = data.errors.map((e) => e.message).join(", ");
+    }
+    // 3. Si es un objeto genérico { message: "..." }
+    else if (data.message || data.error || data.mensaje) {
+      mensaje = data.message || data.error || data.mensaje;
+    }
+    // 4. Si es texto plano o JSON en string
+    else if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed))
+          mensaje = parsed.map((e) => e.message).join(", ");
+        else if (parsed.message) mensaje = parsed.message;
+        else mensaje = data;
+      } catch (e) {
+        mensaje = data;
       }
-    } catch (e) {
-      // Si falla el parseo a JSON, asumimos que es texto plano
-      mensajeError =
-        typeof data === "string" ? data : "Error al procesar la solicitud.";
     }
   } else if (error.message) {
-    mensajeError = error.message;
+    mensaje = error.message;
   }
 
-  // 👉 EL DOMADOR DE PRISMA: Si el mensaje es gigante o habla de Prisma, lo achicamos
-  if (typeof mensajeError === "string") {
-    if (mensajeError.includes("Invalid `prisma")) {
-      mensajeError =
-        "Error en base de datos: Verifica que todos los campos sean correctos.";
-    } else if (mensajeError.length > 100) {
-      // Si sigue siendo muy largo, lo cortamos para no romper el Toast
-      mensajeError = mensajeError.substring(0, 100) + "...";
-    }
+  // Filtro de seguridad para errores de Prisma gigantes
+  if (mensaje.includes("Invalid `prisma")) {
+    mensaje =
+      "Error interno: Formato de datos incorrecto para la base de datos.";
+  } else if (mensaje.length > 150) {
+    mensaje = mensaje.substring(0, 150) + "...";
   }
 
-  throw new Error(mensajeError);
+  throw new Error(mensaje);
 };

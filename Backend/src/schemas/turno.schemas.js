@@ -16,6 +16,12 @@ export const crearTurnoSchema = z.object({
     })
     .int()
     .positive(),
+
+  clienteId: z.number().optional(),
+  clienteManual: z.string().optional(),
+  estado: z.enum(["PENDIENTE", "CONFIRMADO", "CANCELADO", "COMPLETADO"], {
+    errorMap: () => ({ message: "El estado del turno no es válido" }),
+  }).optional(),
 });
 
 export const actualizarEstadoTurnoSchema = z.object({

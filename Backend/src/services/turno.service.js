@@ -1,11 +1,31 @@
 import { prisma } from '../db.js';
 
-export const crearTurno = async (clienteID, datos) => {
+export const crearTurno = async (usuarioSolicitante, datos) => {
+  const rolSeguro = usuarioSolicitante.rol ? usuarioSolicitante.rol.toUpperCase() : 'USER';
+  const esAdmin = rolSeguro === 'ADMIN';
+
+  // Determinamos de quién es el turno
+  let finalClienteId = null;
+  let nombreManual = null;
+
+  if (esAdmin) {
+    if (datos.clienteId) {
+      finalClienteId = parseInt(datos.clienteId); // Eligió a alguien de la lista
+    } else if (datos.clienteManual) {
+      nombreManual = datos.clienteManual; // Escribió "Doña Rosa" a mano
+    }
+  } else {
+    // Si lo pide un cliente desde la web, forzamos su propio ID
+    finalClienteId = parseInt(usuarioSolicitante.id);
+  }
+
   return await prisma.turno.create({
     data: {
       fechaHora: new Date(datos.fechaHora),
-      clienteId: parseInt(clienteID),
-      servicioId: parseInt(datos.servicioId)
+      clienteId: finalClienteId,
+      clienteManual: nombreManual, // 👉 Guardamos el texto libre
+      servicioId: parseInt(datos.servicioId),
+      estado: datos.estado || "PENDIENTE"
     },
     include: {
       servicio: true,
@@ -32,6 +52,41 @@ export const obtenerTurnoPorId = async (id) => {
   });
   if (!turno) throw { status: 404, message: "Turno no encontrado" };
   return turno;
+};
+
+// 🔥 EDICIÓN COMPLETA (Solo para Admin) 🔥
+export const actualizarTurnoCompleto = async (id, datos) => {
+  // 1. Verificamos que el turno exista
+  await obtenerTurnoPorId(id);
+
+  // 2. Armamos el paquete básico
+  const dataActualizada = {
+    fechaHora: datos.fechaHora ? new Date(datos.fechaHora) : undefined,
+    servicioId: datos.servicioId ? parseInt(datos.servicioId) : undefined,
+    estado: datos.estado
+  };
+  
+  // 👉 3. LA MAGIA DEL INTERCAMBIO (SWAP)
+  // Si mandó un ID, guardamos el ID y limpiamos el nombre manual
+  if (datos.clienteId) {
+    dataActualizada.clienteId = parseInt(datos.clienteId);
+    dataActualizada.clienteManual = null; 
+  } 
+  // Si no hay ID pero hay texto, guardamos el texto y limpiamos el ID
+  else if (datos.clienteManual) {
+    dataActualizada.clienteManual = datos.clienteManual;
+    dataActualizada.clienteId = null; 
+  }
+
+  // 4. Guardamos en Prisma y devolvemos el turno con sus relaciones
+  return await prisma.turno.update({
+    where: { id: parseInt(id) },
+    data: dataActualizada,
+    include: {
+      servicio: true,
+      cliente: { select: { nombre: true, email: true } }
+    }
+  });
 };
 
 // Esta es la función que usará tu mamá manualmente, o Mercado Pago automáticamente
@@ -76,5 +131,15 @@ export const cancelarTurno = async (id, clienteId, rolUsuario) => {
   return await prisma.turno.update({
     where: { id: parseInt(id) },
     data: { estado: 'CANCELADO' }
+  });
+};
+
+export const eliminarTurnoFisico = async (id) => {
+  // 1. Verificamos que exista antes de intentar borrar
+  await obtenerTurnoPorId(id);
+
+  // 2. Lo borramos definitivamente de la base de datos
+  return await prisma.turno.delete({
+    where: { id: parseInt(id) }
   });
 };
