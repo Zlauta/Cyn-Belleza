@@ -5,12 +5,13 @@ import { validarEsquema } from '../middleware/validador.middleware.js';
 import { crearTurnoSchema, actualizarEstadoTurnoSchema } from '../schemas/turno.schemas.js';
 
 export const rutasTurnos = Router();
+rutasTurnos.post('/publico', turnoController.crearTurnoPublico);
 
 // Todas las rutas de turnos requieren estar logueado, así que ponemos el middleware global para este router
 rutasTurnos.use(verificarToken);
 
 // Clientes y Admin
-rutasTurnos.post('/publico', turnoController.crearTurnoPublico);
+
 rutasTurnos.post('/', validarEsquema(crearTurnoSchema), turnoController.crear);
 rutasTurnos.get('/', turnoController.obtenerTodos);
 rutasTurnos.patch('/:id/cancelar', turnoController.cancelar); // Usamos PATCH porque solo cambiamos el estado
