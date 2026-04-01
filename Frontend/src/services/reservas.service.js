@@ -1,6 +1,17 @@
 import clienteAxios from '../api/axios';
 import { atraparError } from '../utils/handlerError.js';
 
+export const consultarDisponibilidadPublica = async (fecha, servicioId) => {
+  try {
+    const { data } = await clienteAxios.get('/turnos/disponibilidad', {
+      params: { fecha, servicioId }
+    });
+    return data.datos || []; // Devolvemos el array de horarios ["09:00", "10:30", ...]
+  } catch (error) { 
+    atraparError(error); 
+    return []; // Si hay error, devolvemos array vacío para no romper el front
+  }
+};
 // Trae los servicios para mostrarlos en el catálogo
 export const obtenerServiciosPublicos = async () => {
   try {

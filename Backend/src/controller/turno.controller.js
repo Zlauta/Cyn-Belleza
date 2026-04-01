@@ -1,4 +1,17 @@
-import * as turnoService from '../services/turno.service.js';
+import * as turnoService from "../services/turno.service.js";
+
+export const consultarDisponibilidad = async (req, res, next) => {
+  try {
+    const { fecha, servicioId } = req.query;
+    const horarios = await turnoService.obtenerHorariosDisponibles(
+      fecha,
+      servicioId,
+    );
+    res.json({ exito: true, datos: horarios });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const crearTurnoPublico = async (req, res, next) => {
   try {
@@ -6,9 +19,10 @@ export const crearTurnoPublico = async (req, res, next) => {
 
     // 1. Validaciones básicas (si usás Zod en la ruta, podés obviar esto)
     if (!servicioId || !fechaHora || !clienteManual) {
-      return res.status(400).json({ 
-        exito: false, 
-        mensaje: "Faltan datos requeridos (Servicio, Fecha/Hora o Datos del Cliente)" 
+      return res.status(400).json({
+        exito: false,
+        mensaje:
+          "Faltan datos requeridos (Servicio, Fecha/Hora o Datos del Cliente)",
       });
     }
 
@@ -16,7 +30,7 @@ export const crearTurnoPublico = async (req, res, next) => {
     const nuevoTurno = await turnoService.crearTurnoPublico({
       servicioId,
       fechaHora,
-      clienteManual
+      clienteManual,
     });
 
     // 3. Respondemos al Frontend
@@ -29,10 +43,10 @@ export const crearTurnoPublico = async (req, res, next) => {
 export const crear = async (req, res, next) => {
   try {
     const nuevoTurno = await turnoService.crearTurno(req.usuario, req.body);
-    
-    res.status(201).json({ 
-      exito: true, 
-      datos: nuevoTurno 
+
+    res.status(201).json({
+      exito: true,
+      datos: nuevoTurno,
     });
   } catch (error) {
     next(error);
@@ -42,9 +56,9 @@ export const crear = async (req, res, next) => {
 export const obtenerTodos = async (req, res, next) => {
   try {
     let filtro = {};
-    
+
     // Si NO es admin, le mostramos SOLO los turnos que él mismo pidió
-    if (req.usuario.rol !== 'ADMIN') {
+    if (req.usuario.rol !== "ADMIN") {
       filtro = { usuarioId: req.usuario.id };
     }
     // Si es admin, el filtro queda vacío ({}) y le trae los de todo el mundo
@@ -59,13 +73,13 @@ export const obtenerTodos = async (req, res, next) => {
 export const cancelar = async (req, res, next) => {
   try {
     const turnoCancelado = await turnoService.cancelarTurno(
-      req.params.id, 
-      req.usuario.id, 
-      req.usuario.rol
+      req.params.id,
+      req.usuario.id,
+      req.usuario.rol,
     );
-    res.status(200).json({ 
-      mensaje: "Turno cancelado correctamente", 
-      turno: turnoCancelado 
+    res.status(200).json({
+      mensaje: "Turno cancelado correctamente",
+      turno: turnoCancelado,
     });
   } catch (error) {
     next(error);
@@ -74,7 +88,10 @@ export const cancelar = async (req, res, next) => {
 
 export const actualizarTurnoCompleto = async (req, res, next) => {
   try {
-    const turnoActualizado = await turnoService.actualizarTurnoCompleto(req.params.id, req.body);
+    const turnoActualizado = await turnoService.actualizarTurnoCompleto(
+      req.params.id,
+      req.body,
+    );
     res.status(200).json({ exito: true, datos: turnoActualizado });
   } catch (error) {
     next(error);
@@ -84,10 +101,13 @@ export const actualizarTurnoCompleto = async (req, res, next) => {
 export const actualizarEstado = async (req, res, next) => {
   try {
     // Esta ruta la va a usar tu mamá (Admin) o Mercado Pago
-    const turnoActualizado = await turnoService.actualizarEstado(req.params.id, req.body);
-    res.status(200).json({ 
-      mensaje: "Estado del turno actualizado", 
-      turno: turnoActualizado 
+    const turnoActualizado = await turnoService.actualizarEstado(
+      req.params.id,
+      req.body,
+    );
+    res.status(200).json({
+      mensaje: "Estado del turno actualizado",
+      turno: turnoActualizado,
     });
   } catch (error) {
     next(error);
@@ -97,7 +117,9 @@ export const actualizarEstado = async (req, res, next) => {
 export const eliminar = async (req, res, next) => {
   try {
     await turnoService.eliminarTurnoFisico(req.params.id);
-    res.status(200).json({exito: true, mensaje: "Turno eliminado correctamente" });
+    res
+      .status(200)
+      .json({ exito: true, mensaje: "Turno eliminado correctamente" });
   } catch (error) {
     next(error);
   }

@@ -17,7 +17,22 @@ const ResumenReserva = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onConfirmar({ nombre, telefono });
+    if (nombre.trim().length < 3) {
+      return toast.error("Por favor, ingresá tu nombre completo.");
+    }
+
+    // Validamos que el teléfono tenga entre 8 y 15 dígitos y sean solo números
+    const telRegex = /^\d{8,15}$/;
+    if (!telRegex.test(telefono)) {
+      return toast.error(
+        "Ingresá un número de WhatsApp válido (solo números).",
+      );
+    }
+
+    onConfirmar({
+      nombre: nombre.trim(),
+      telefono: telefono.trim(),
+    });
   };
 
   return (
@@ -64,23 +79,25 @@ const ResumenReserva = ({
           <input
             type="text"
             required
+            minLength={3}
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Ej: María Gómez"
-            className="w-full px-4 py-3 border border-pink-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 outline-none"
+            className="w-full px-4 py-3 border border-pink-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-1">
-            Tu WhatsApp (Para avisarte)
+            Tu WhatsApp
           </label>
           <input
             type="tel"
             required
+            pattern="[0-9]*" // Sugiere teclado numérico en celulares
             value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            placeholder="Ej: 381 123 4567"
-            className="w-full px-4 py-3 border border-pink-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 outline-none"
+            onChange={(e) => setTelefono(e.target.value.replace(/\D/g, ""))} // Limpia letras al escribir
+            placeholder="Ej: 3811234567"
+            className="w-full px-4 py-3 border border-pink-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
 

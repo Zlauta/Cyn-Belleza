@@ -5,6 +5,8 @@ import { validarEsquema } from '../middleware/validador.middleware.js';
 import { crearTurnoSchema, actualizarEstadoTurnoSchema } from '../schemas/turno.schemas.js';
 
 export const rutasTurnos = Router();
+// Ventanilla pública para que el cliente consulte qué horas hay libres
+rutasTurnos.get('/disponibilidad', turnoController.consultarDisponibilidad);
 rutasTurnos.post('/publico', turnoController.crearTurnoPublico);
 
 // Todas las rutas de turnos requieren estar logueado, así que ponemos el middleware global para este router
