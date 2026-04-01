@@ -104,3 +104,13 @@ export const cancelarTurno = async (id, clienteId, rolUsuario) => {
     data: { estado: 'CANCELADO' }
   });
 };
+
+export const eliminarTurnoFisico = async (id) => {
+  // 1. Verificamos que exista antes de intentar borrar
+  await obtenerTurnoPorId(id);
+
+  // 2. Lo borramos definitivamente de la base de datos
+  return await prisma.turno.delete({
+    where: { id: parseInt(id) }
+  });
+};

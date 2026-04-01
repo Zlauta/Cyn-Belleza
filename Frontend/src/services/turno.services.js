@@ -45,3 +45,12 @@ export const cancelarTurnoService = async (id) => {
     atraparError(error);
   }
 };
+
+export const eliminarTurnoService = async (id) => {
+  try {
+    const { data } = await clienteAxios.delete(`/turnos/${id}`);
+    return data;
+  } catch (error) {
+    atraparError(error);
+  }
+};

@@ -69,3 +69,12 @@ export const actualizarEstado = async (req, res, next) => {
     next(error);
   }
 };
+
+export const eliminar = async (req, res, next) => {
+  try {
+    await turnoService.eliminarTurnoFisico(req.params.id);
+    res.status(200).json({exito: true, mensaje: "Turno eliminado correctamente" });
+  } catch (error) {
+    next(error);
+  }
+};

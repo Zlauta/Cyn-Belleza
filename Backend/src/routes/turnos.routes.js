@@ -19,3 +19,6 @@ rutasTurnos.patch('/:id/estado', esAdministrador, validarEsquema(actualizarEstad
 
 rutasTurnos.put('/:id', esAdministrador, turnoController.actualizarTurnoCompleto);
 
+// Solo la dueña puede borrar registros de la base de datos
+rutasTurnos.delete('/:id', esAdministrador, turnoController.eliminar);
+

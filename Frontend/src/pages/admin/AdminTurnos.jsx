@@ -9,7 +9,7 @@ import {
   obtenerTurnos,
   crearTurno,
   actualizarTurno,
-  cancelarTurnoService,
+  eliminarTurnoService,
 } from "../../services/turno.services.js";
 
 // 👉 Importamos los componentes hijos
@@ -89,7 +89,6 @@ const AdminTurnos = () => {
     // 2. Armamos el paquete completo
     const payload = {
       cliente: data.cliente,
-      profesional: data.profesional,
       estado: data.estado,
       servicioId: Number(data.servicioId),
       fechaHora: fechaHoraUnida.toISOString(),
@@ -118,17 +117,19 @@ const AdminTurnos = () => {
 
   const confirmarEliminacion = async () => {
     if (!turnoAEliminar) return;
-    const loadToast = toast.loading("Cancelando turno...");
-    try {
-      // 👉 Usamos el nuevo servicio
-      await cancelarTurnoService(turnoAEliminar.id);
 
-      toast.success("Turno cancelado", { id: loadToast });
-      setTurnos(
-        turnos.map((t) =>
-          t.id === turnoAEliminar.id ? { ...t, estado: "CANCELADO" } : t,
-        ),
-      );
+    const { id, nombre } = turnoAEliminar;
+    const loadToast = toast.loading("Eliminando registro...");
+
+    try {
+      // Llamamos al DELETE del backend
+      await eliminarTurnoService(id);
+
+      toast.success(`${nombre} eliminado permanentemente`, { id: loadToast });
+
+      // 👉 REGLA DE ORO: Si se borró de la DB, se borra del estado de React
+      setTurnos(turnos.filter((t) => t.id !== id));
+
       setTurnoAEliminar(null);
     } catch (error) {
       toast.error(error.message, { id: loadToast });
