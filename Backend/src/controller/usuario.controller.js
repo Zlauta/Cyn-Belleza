@@ -37,3 +37,24 @@ export const eliminar = async (req, res, next) => {
     next(error);
   }
 };
+
+export const obtenerPorId = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const usuario = await usuarioService.obtenerUsuarioPorId(id);
+    res.status(200).json({ exito: true, datos: usuario });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const actualizar = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const datosActualizados = req.body;
+    const usuario = await usuarioService.actualizarUsuario(id, datosActualizados);
+    res.status(200).json({ exito: true, datos: usuario });
+  } catch (error) {
+    next(error);
+  }
+};
