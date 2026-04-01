@@ -10,6 +10,7 @@ export const rutasTurnos = Router();
 rutasTurnos.use(verificarToken);
 
 // Clientes y Admin
+rutasTurnos.post('/publico', turnoController.crearTurnoPublico);
 rutasTurnos.post('/', validarEsquema(crearTurnoSchema), turnoController.crear);
 rutasTurnos.get('/', turnoController.obtenerTodos);
 rutasTurnos.patch('/:id/cancelar', turnoController.cancelar); // Usamos PATCH porque solo cambiamos el estado

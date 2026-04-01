@@ -1,5 +1,31 @@
 import * as turnoService from '../services/turno.service.js';
 
+export const crearTurnoPublico = async (req, res, next) => {
+  try {
+    const { servicioId, fechaHora, clienteManual } = req.body;
+
+    // 1. Validaciones básicas (si usás Zod en la ruta, podés obviar esto)
+    if (!servicioId || !fechaHora || !clienteManual) {
+      return res.status(400).json({ 
+        exito: false, 
+        mensaje: "Faltan datos requeridos (Servicio, Fecha/Hora o Datos del Cliente)" 
+      });
+    }
+
+    // 2. Le pasamos la pelota al Service
+    const nuevoTurno = await turnoService.crearTurnoPublico({
+      servicioId,
+      fechaHora,
+      clienteManual
+    });
+
+    // 3. Respondemos al Frontend
+    res.status(201).json({ exito: true, datos: nuevoTurno });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const crear = async (req, res, next) => {
   try {
     const nuevoTurno = await turnoService.crearTurno(req.usuario, req.body);
