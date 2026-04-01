@@ -42,7 +42,7 @@ const ModalConfirmacion = ({ abierto, cerrar, confirmar, titulo, mensaje }) => {
                 onClick={confirmar}
                 className="flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl shadow-md shadow-red-500/20 hover:bg-red-600 transition-colors"
               >
-                Sí, Desactivar
+                Sí, Eliminar
               </button>
             </div>
           </motion.div>
