@@ -82,24 +82,24 @@ const AdminTurnos = () => {
   };
 
 const onSubmitForm = async (data) => {
+const fechaHoraUnida = new Date(`${data.fecha}T${data.hora}:00`);
+    const ahora = new Date();
 
-    // Frenamos si los dos están vacíos
-    if (!data.clienteId && !data.clienteManual) {
-      toast.error("⚠️ Debes asignar un cliente (registrado o manual).");
-      return;
+    // 🔥 REGLA DE ORO: Validar el estado "Completado" en el futuro
+    if (data.estado === 'COMPLETADO' && fechaHoraUnida > ahora) {
+      toast.error("⏳ No podés marcar como 'Completado' un turno que todavía no sucedió.");
+      return; // Cortamos el envío
     }
 
-    const fechaHoraUnida = new Date(`${data.fecha}T${data.hora}:00`);
-
+    // El resto de tu lógica de payload sigue igual...
     const payload = {
       clienteId: data.clienteId ? Number(data.clienteId) : undefined,
-      clienteManual: data.clienteManual || undefined, // 👉 Mandamos el manual
+      clienteManual: data.clienteManual || undefined,
       estado: data.estado,
       servicioId: Number(data.servicioId),
       fechaHora: fechaHoraUnida.toISOString()
     };
 
-    console.log("🚀 PAQUETE QUE SALE DE REACT:", payload);
     const loadToast = toast.loading(turnoAEditar ? 'Actualizando...' : 'Agendando...');
     
     try {

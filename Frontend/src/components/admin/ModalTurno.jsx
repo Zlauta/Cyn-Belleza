@@ -8,12 +8,22 @@ import { obtenerServicios } from "../../services/servicio.service.js";
 import { obtenerUsuarios } from "../../services/auth.services.js";
 
 const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, watch } = useForm();
 
   // 👉 ESTADOS PARA GUARDAR LO QUE VIENE DE LA BASE DE DATOS
   const [listaServicios, setListaServicios] = useState([]);
   const [listaUsuarios, setListaUsuarios] = useState([]);
   const [esClienteManual, setEsClienteManual] = useState(false);
+
+  const fechaElegida = watch("fecha");
+  const horaElegida = watch("hora");
+
+  // 3. Calculamos si el turno es a futuro
+  const esTurnoFuturo = () => {
+    if (!fechaElegida || !horaElegida) return true;
+    const fechaHoraCombo = new Date(`${fechaElegida}T${horaElegida}:00`);
+    return fechaHoraCombo > new Date();
+  };
 
   const hoyStr = format(new Date(), "yyyy-MM-dd");
   const maxMeseStr = format(addMonths(new Date(), 2), "yyyy-MM-dd");
@@ -219,7 +229,12 @@ const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
                 >
                   <option value="PENDIENTE">Pendiente</option>
                   <option value="CONFIRMADO">Confirmado</option>
-                  <option value="COMPLETADO">Completado</option>
+
+                  {/* 👉 DESHABILITADO SI ES FUTURO */}
+                  <option value="COMPLETADO" disabled={esTurnoFuturo()}>
+                    Completado{" "}
+                  </option>
+
                   <option value="CANCELADO">Cancelado</option>
                 </select>
               </div>
