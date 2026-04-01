@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 
 const MENU_ADMIN = [
   { nombre: "Dashboard", ruta: "/admin", icono: LayoutDashboard },
-  { nombre: "Gestión de Turnos", ruta: "/admin/turnos", icono: Calendar },
+  { nombre: "Turnos", ruta: "/admin/turnos", icono: Calendar },
   { nombre: "Clientes", ruta: "/admin/usuarios", icono: Users },
   { nombre: "Servicios", ruta: "/admin/servicios", icono: Tag },
 ];
@@ -97,17 +97,6 @@ const AdminLayout = ({ children }) => {
             );
           })}
         </nav>
-
-        {/* Botón Salir */}
-        <div className="p-4 border-t border-gray-50">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl font-semibold text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            Cerrar Sesión
-          </button>
-        </div>
       </motion.aside>
 
       {/* 🖥️ ÁREA PRINCIPAL */}
@@ -117,47 +106,41 @@ const AdminLayout = ({ children }) => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarAbierto(true)}
-              className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+              className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Menu className="w-6 h-6" />
             </button>
-
-            {/* Buscador (Visual) */}
-            <div className="hidden md:flex items-center bg-gray-50 rounded-full px-4 py-2 w-96 border border-gray-100 focus-within:border-pink-300 focus-within:ring-2 focus-within:ring-pink-100 transition-all">
-              <Search className="w-4 h-4 text-gray-400 mr-2" />
-              <input
-                type="text"
-                placeholder="Buscar clientes, servicios..."
-                className="bg-transparent border-none focus:ring-0 text-sm w-full text-gray-700 placeholder-gray-400 outline-none"
-              />
-            </div>
           </div>
 
           <div className="flex items-center gap-4 sm:gap-6">
-            <button className="text-gray-400 hover:text-pink-600 transition-colors relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-pink-600 rounded-full border-2 border-white"></span>
-            </button>
-            <button className="text-gray-400 hover:text-pink-600 transition-colors hidden sm:block">
-              <Settings className="w-5 h-5" />
-            </button>
-
-            <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
-
             {/* Perfil Cynthia */}
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right">
                 <p className="text-sm font-bold text-gray-900">
-                  {usuario.nombre.split(" ")[0]}
+                  {usuario?.nombre?.split(" ")[0] || "Administradora"}
                 </p>
                 <p className="text-xs text-pink-600 font-bold tracking-wider">
-                  ADMINISTRADORA
+                  ADMIN
                 </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-pink-100 border-2 border-white shadow-sm flex items-center justify-center text-pink-600 font-bold text-lg overflow-hidden">
-                {/* Asumimos que es Cynthia, ponemos un emoji lindo, o podrías poner la foto de perfil si la tuvieras */}
                 👩🏻‍💼
               </div>
+
+              {/* Divisor */}
+              <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+
+              {/* Botón Funcional de Salir */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-gray-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 group"
+                title="Cerrar Sesión"
+              >
+                <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline text-sm font-medium">
+                  Salir
+                </span>
+              </button>
             </div>
           </div>
         </header>

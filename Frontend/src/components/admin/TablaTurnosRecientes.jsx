@@ -15,12 +15,27 @@ const TablaTurnosRecientes = ({ turnos, setTurnos, navigate }) => {
     .sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora))
     .slice(0, 5);
 
-  const handleCambiarEstado = async (idTurno, nuevoEstado) => {
+  // 👉 Ahora recibimos el turno completo, no solo el ID
+  const handleCambiarEstado = async (turno, nuevoEstado) => {
+    // 🔥 REGLA DE NEGOCIO: No se puede completar un turno del futuro
+    if (nuevoEstado === "COMPLETADO") {
+      const ahora = new Date();
+      const fechaDelTurno = new Date(turno.fechaHora);
+
+      if (fechaDelTurno > ahora) {
+        toast.error("⏳ No puedes completar un turno que aún no ha sucedido.");
+        setMenuAbiertoId(null); // Cerramos el menú
+        return; // Cortamos la ejecución acá, no va al backend
+      }
+    }
+
     const loadToast = toast.loading("Actualizando estado...");
     try {
-      await actualizarTurno(idTurno, { estado: nuevoEstado });
+      await actualizarTurno(turno.id, { estado: nuevoEstado });
       setTurnos((prev) =>
-        prev.map((t) => (t.id === idTurno ? { ...t, estado: nuevoEstado } : t)),
+        prev.map((t) =>
+          t.id === turno.id ? { ...t, estado: nuevoEstado } : t,
+        ),
       );
       setMenuAbiertoId(null);
       toast.success(`Turno marcado como ${nuevoEstado}`, { id: loadToast });
@@ -28,7 +43,6 @@ const TablaTurnosRecientes = ({ turnos, setTurnos, navigate }) => {
       toast.error("Error al actualizar el estado", { id: loadToast });
     }
   };
-
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible">
       <div className="p-6 border-b border-gray-100 flex justify-between items-center">
@@ -63,9 +77,7 @@ const TablaTurnosRecientes = ({ turnos, setTurnos, navigate }) => {
             ) : (
               turnosRecientes.map((turno) => {
                 const nombreCliente =
-                  turno.cliente?.nombre ||
-                  turno.clienteManual ||
-                  "Anónimo";
+                  turno.cliente?.nombre || turno.clienteManual || "Anónimo";
                 const iniciales = nombreCliente.substring(0, 2).toUpperCase();
                 const fecha = new Date(turno.fechaHora);
 
@@ -136,7 +148,7 @@ const TablaTurnosRecientes = ({ turnos, setTurnos, navigate }) => {
                           <div className="absolute right-16 top-1 w-40 bg-white rounded-xl shadow-xl border border-gray-300 z-50 overflow-hidden py-1">
                             <button
                               onClick={() =>
-                                handleCambiarEstado(turno.id, "CONFIRMADO")
+                                handleCambiarEstado(turno, "CONFIRMADO")
                               }
                               className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-emerald-100 text-gray-700 font-medium"
                             >
@@ -145,15 +157,16 @@ const TablaTurnosRecientes = ({ turnos, setTurnos, navigate }) => {
                             </button>
                             <button
                               onClick={() =>
-                                handleCambiarEstado(turno.id, "COMPLETADO")
+                                handleCambiarEstado(turno, "COMPLETADO")
                               }
                               className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-blue-100 text-blue-600 font-medium"
                             >
                               <CheckCircle2 className="w-4 h-4" /> Completar
                             </button>
+                            <div className="h-px bg-gray-200 my-1"></div>
                             <button
                               onClick={() =>
-                                handleCambiarEstado(turno.id, "CANCELADO")
+                                handleCambiarEstado(turno, "CANCELADO")
                               }
                               className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-red-100 text-red-600 font-medium"
                             >
