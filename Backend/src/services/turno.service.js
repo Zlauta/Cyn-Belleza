@@ -143,3 +143,23 @@ export const eliminarTurnoFisico = async (id) => {
     where: { id: parseInt(id) }
   });
 };
+
+// Agregá esto en tu turnos.service.js
+
+export const crearTurnoPublico = async (datosReserva) => {
+  // 🔥 ESCUDO DE SEGURIDAD: Por más que manden otro estado, forzamos PENDIENTE
+  return await prisma.turno.create({
+    data: {
+      servicioId: Number(datosReserva.servicioId),
+      fechaHora: new Date(datosReserva.fechaHora),
+      clienteManual: datosReserva.clienteManual,
+      estado: 'PENDIENTE', 
+    },
+    include: {
+      servicio: true // Opcional: devuelve info del servicio al front si la necesitás
+    }
+    
+  });
+
+  
+};
