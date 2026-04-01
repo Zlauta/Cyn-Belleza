@@ -31,3 +31,29 @@ export const obtenerUsuarios = async () => {
   }
 };
 
+export const eliminarUsuario = async (id) => {
+  try {
+    const { data } = await clienteAxios.delete(`/usuarios/${id}`);
+    return data.datos || data;
+  } catch (error) {
+    atraparError(error); // 👉 Usamos la global
+  }
+};
+
+export const obtenerUsuarioPorId = async (id) => {
+  try {
+    const { data } = await clienteAxios.get(`/usuarios/${id}`);
+    return data.datos || data;
+  } catch (error) {
+    atraparError(error); // 👉 Usamos la global
+  }
+};
+
+export const actualizarUsuario = async (id, datosActualizados) => {
+  try {
+    const { data } = await clienteAxios.put(`/usuarios/${id}`, datosActualizados);
+    return data.datos || data;
+  } catch (error) {
+    atraparError(error); // 👉 Usamos la global
+  }
+};
