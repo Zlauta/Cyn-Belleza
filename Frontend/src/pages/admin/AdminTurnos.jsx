@@ -38,8 +38,7 @@ const AdminTurnos = () => {
         // 1. Parseamos la fecha ISO del backend
         const fechaObj = t.fechaHora ? parseISO(t.fechaHora) : new Date();
 
-        // 2. Extraemos los textos de adentro de los objetos (con fallback por si vienen vacíos)
-        const nombreCliente = t.cliente?.nombre || "Cliente Anónimo";
+        const nombreCliente = t.cliente?.nombre || t.clienteManual || 'Cliente Anónimo';
         const nombreServicio = t.servicio?.nombre || "Servicio";
 
         // 3. Extraemos la hora para mostrar en la pastillita y la tabla
@@ -82,34 +81,36 @@ const AdminTurnos = () => {
     setTurnoAEliminar({ id, nombre });
   };
 
-  const onSubmitForm = async (data) => {
-    // 1. Unimos la Fecha y la Hora SIEMPRE (tanto para crear como para editar)
+const onSubmitForm = async (data) => {
+
+    // Frenamos si los dos están vacíos
+    if (!data.clienteId && !data.clienteManual) {
+      toast.error("⚠️ Debes asignar un cliente (registrado o manual).");
+      return;
+    }
+
     const fechaHoraUnida = new Date(`${data.fecha}T${data.hora}:00`);
 
-    // 2. Armamos el paquete completo
     const payload = {
-      cliente: data.cliente,
+      clienteId: data.clienteId ? Number(data.clienteId) : undefined,
+      clienteManual: data.clienteManual || undefined, // 👉 Mandamos el manual
       estado: data.estado,
       servicioId: Number(data.servicioId),
-      fechaHora: fechaHoraUnida.toISOString(),
+      fechaHora: fechaHoraUnida.toISOString()
     };
 
-    const loadToast = toast.loading(
-      turnoAEditar ? "Actualizando turno..." : "Agendando...",
-    );
-
+    console.log("🚀 PAQUETE QUE SALE DE REACT:", payload);
+    const loadToast = toast.loading(turnoAEditar ? 'Actualizando...' : 'Agendando...');
+    
     try {
       if (turnoAEditar) {
-        // 👉 Usamos la función genérica que manda el payload completo
         await actualizarTurno(turnoAEditar.id, payload);
-        toast.success("Turno actualizado por completo", { id: loadToast });
       } else {
         await crearTurno(payload);
-        toast.success("Turno agendado", { id: loadToast });
       }
-
       setModalAbierto(false);
       cargarDatos();
+      toast.success('¡Operación exitosa!', { id: loadToast });
     } catch (error) {
       toast.error(error.message, { id: loadToast });
     }

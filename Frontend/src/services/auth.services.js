@@ -21,3 +21,13 @@ export const registroService = async (datosUsuario) => {
     atraparError(error); // 👉 Usamos la global
   }
 };
+
+export const obtenerUsuarios = async () => {
+  try {
+    const { data } = await clienteAxios.get("/usuarios");
+    return data.datos || data;
+  } catch (error) {
+    atraparError(error); // 👉 Usamos la global
+  }
+};
+

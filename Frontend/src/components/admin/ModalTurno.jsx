@@ -3,25 +3,43 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
 import { format, addMonths } from "date-fns";
-import { obtenerServicios } from "../../services/servicio.service.js"; // 👉 Importamos el servicio
+import { obtenerServicios } from "../../services/servicio.service.js";
+// 👉 Asegurate de tener este archivo creado en tus services
+import { obtenerUsuarios } from "../../services/auth.services.js";
 
 const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
   const { register, handleSubmit, reset } = useForm();
+
+  // 👉 ESTADOS PARA GUARDAR LO QUE VIENE DE LA BASE DE DATOS
   const [listaServicios, setListaServicios] = useState([]);
+  const [listaUsuarios, setListaUsuarios] = useState([]);
+  const [esClienteManual, setEsClienteManual] = useState(false);
 
   const hoyStr = format(new Date(), "yyyy-MM-dd");
   const maxMeseStr = format(addMonths(new Date(), 2), "yyyy-MM-dd");
 
-  // 👉 Cargamos los servicios apenas se abre el componente
+  // 👉 AL ABRIR EL COMPONENTE, BUSCAMOS SERVICIOS Y USUARIOS
   useEffect(() => {
     obtenerServicios().then((data) => {
-      // Filtramos para mostrar solo los activos en el select
+      // Extraemos el array seguro para servicios
+      const arrayServicios = Array.isArray(data) ? data : data?.datos || [];
       setListaServicios(
-        (data || []).filter((s) => s.estado === "Activo" || s.activo === true),
+        arrayServicios.filter(
+          (s) => s.estado === "Activo" || s.activo === true,
+        ),
       );
+    });
+
+    obtenerUsuarios().then((data) => {
+      // 👉 BÚSQUEDA INTELIGENTE: Buscamos el array venga como venga
+      const arrayUsuarios = Array.isArray(data)
+        ? data
+        : data?.datos || data?.usuarios || [];
+      setListaUsuarios(arrayUsuarios);
     });
   }, []);
 
+  // 👉 PREPARAMOS EL FORMULARIO (NUEVO O EDITAR)
   useEffect(() => {
     if (turnoAEditar) {
       const fechaFormateada =
@@ -40,15 +58,23 @@ const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
               "HH:mm",
             );
 
+      // Si el turno a editar tiene un nombre manual, activamos el switch de "Doña Rosa"
+      const tieneNombreManual = !!turnoAEditar.clienteManual;
+      setEsClienteManual(tieneNombreManual);
+
       reset({
         ...turnoAEditar,
         fecha: fechaFormateada,
         hora: horaFormateada,
-        servicioId: turnoAEditar.servicioId,
+        clienteId: turnoAEditar.clienteId || "",
+        clienteManual: turnoAEditar.clienteManual || "",
+        servicioId: turnoAEditar.servicioId || "",
       });
     } else {
+      setEsClienteManual(false); // Por defecto mostramos la lista desplegable
       reset({
-        cliente: "",
+        clienteId: "",
+        clienteManual: "",
         servicioId: "",
         fecha: hoyStr,
         hora: "10:00",
@@ -91,36 +117,71 @@ const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
               onSubmit={handleSubmit(onSubmitForm)}
               className="p-6 space-y-4"
             >
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Nombre del Cliente
-                </label>
-                <input
-                  {...register("cliente", { required: true })}
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500"
-                  placeholder="Ej: Elena García"
-                />
-              </div>
-
-              <div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">
-                    Servicio
+              {/* 👉 SELECTOR DE TIPO DE CLIENTE */}
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-bold text-gray-700">
+                    Asignar Cliente
                   </label>
-                  {/* 👉 Ahora es un select que devuelve un servicioId */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEsClienteManual(!esClienteManual);
+                      // Limpiamos los campos al cambiar de modo para que no se mezclen
+                      reset((formValues) => ({
+                        ...formValues,
+                        clienteId: "",
+                        clienteManual: "",
+                      }));
+                    }}
+                    className="text-xs font-bold text-pink-600 hover:text-pink-700 underline"
+                  >
+                    {esClienteManual
+                      ? "Elegir de la lista"
+                      : "Escribir nombre manual"}
+                  </button>
+                </div>
+
+                {esClienteManual ? (
+                  <input
+                    {...register("clienteManual")}
+                    type="text"
+                    placeholder="Ej: Doña Rosa (Tel: 381-1234567)"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 bg-white"
+                  />
+                ) : (
                   <select
-                    {...register("servicioId", { required: true })}
+                    {...register("clienteId")}
                     className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 bg-white"
                   >
-                    <option value="">Seleccionar...</option>
-                    {listaServicios.map((serv) => (
-                      <option key={serv.id} value={serv.id}>
-                        {serv.nombre}
-                      </option>
-                    ))}
+                    <option value="">Seleccionar cliente registrado...</option>
+                    {listaUsuarios
+                      .filter((u) => u.rol !== "ADMIN")
+                      .map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.nombre}
+                        </option>
+                      ))}
                   </select>
-                </div>
+                )}
+              </div>
+
+              {/* 👉 SERVICIO */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Servicio
+                </label>
+                <select
+                  {...register("servicioId", { required: true })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 bg-white"
+                >
+                  <option value="">Seleccionar...</option>
+                  {listaServicios.map((serv) => (
+                    <option key={serv.id} value={serv.id}>
+                      {serv.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -158,7 +219,6 @@ const ModalTurno = ({ abierto, cerrar, turnoAEditar, onSubmitForm }) => {
                 >
                   <option value="PENDIENTE">Pendiente</option>
                   <option value="CONFIRMADO">Confirmado</option>
-                  <option value="EN PROCESO">En Proceso</option>
                   <option value="COMPLETADO">Completado</option>
                   <option value="CANCELADO">Cancelado</option>
                 </select>

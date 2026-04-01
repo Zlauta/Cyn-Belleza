@@ -43,8 +43,10 @@ model Turno {
   stadoPago EstadoPago @default(PENDIENTE)
   transaccionId String?
 
-  clienteId Int
-  cliente   Usuarios @relation("Turnos", fields: [clienteId], references: [id])
+  clienteId Int?
+  cliente   Usuarios? @relation("Turnos", fields: [clienteId], references: [id])
+
+ clienteManual String?
 
   servicioId Int
   servicio   Servicios @relation(fields: [servicioId], references: [id])

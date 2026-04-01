@@ -2,13 +2,11 @@ import * as turnoService from '../services/turno.service.js';
 
 export const crear = async (req, res, next) => {
   try {
-    // Sacamos el ID del usuario directamente del token por seguridad
-    const usuarioId = req.usuario.id; 
+    const nuevoTurno = await turnoService.crearTurno(req.usuario, req.body);
     
-    const nuevoTurno = await turnoService.crearTurno(usuarioId, req.body);
     res.status(201).json({ 
-      mensaje: "Turno reservado con éxito", 
-      turno: nuevoTurno 
+      exito: true, 
+      datos: nuevoTurno 
     });
   } catch (error) {
     next(error);
