@@ -92,3 +92,24 @@ export const eliminarUsuario = async (id) => {
     select: { id: true, nombre: true },
   });
 };
+
+export const obtenerUsuarioPorId = async (id) => {
+  const usuario = await prisma.usuarios.findUnique({
+    where: { id: Number(id) },
+    select: { id: true, nombre: true, email: true, rol: true },
+  });
+  if (!usuario) throw { status: 404, message: "Usuario no encontrado" };
+  return usuario;
+};
+
+export const actualizarUsuario = async (id, datosActualizados) => {
+  if (datosActualizados.contrasenia) {
+    datosActualizados.contrasenia = await argon2.hash(datosActualizados.contrasenia);
+  }
+
+  return await prisma.usuarios.update({
+    where: { id: Number(id) },
+    data: datosActualizados,
+    select: { id: true, nombre: true, email: true, rol: true },
+  });
+};
