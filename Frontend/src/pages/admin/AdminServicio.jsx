@@ -23,9 +23,8 @@ import ModalConfirmacion from "../../components/admin/ModalConfirmacion.jsx";
 const CATEGORIAS = [
   "Todas",
   "Peluquería",
-  "Uñas",
-  "Pestañas y Cejas",
-  "Maquillaje",
+  "Manicura y Pedicura",
+  "Estética Facial",
 ];
 
 const AdminServicios = () => {
