@@ -21,9 +21,10 @@ export const registrarUsuario = async (datos) => {
       email: datos.email,
       contrasenia: contrasenaHasheada,
       rol: datos.rol || "CLIENTE",
+      telefono: datos.telefono
     },
     // No devolvemos la contraseña al frontend
-    select: { id: true, nombre: true, email: true, rol: true },
+    select: { id: true, nombre: true, email: true, rol: true, telefono: true },
   });
 
   const token = jwt.sign(
@@ -39,6 +40,7 @@ export const registrarUsuario = async (datos) => {
       nombre: nuevoUsuario.nombre,
       email: nuevoUsuario.email,
       rol: nuevoUsuario.rol,
+      telefono: nuevoUsuario.telefono // 👉 Agregamos el teléfono al retorno del registro
     },
   };
 };
@@ -76,13 +78,14 @@ export const autenticarUsuario = async (email, contrasenia) => {
       nombre: usuario.nombre,
       email: usuario.email,
       rol: usuario.rol,
+      telefono: usuario.telefono // 👉 Agregamos el teléfono al retorno del login
     },
   };
 };
 
 export const obtenerTodosLosUsuarios = async () => {
   return await prisma.usuarios.findMany({
-    select: { id: true, nombre: true, email: true, rol: true },
+    select: { id: true, nombre: true, email: true, rol: true, telefono: true },
   });
 };
 
@@ -96,7 +99,7 @@ export const eliminarUsuario = async (id) => {
 export const obtenerUsuarioPorId = async (id) => {
   const usuario = await prisma.usuarios.findUnique({
     where: { id: Number(id) },
-    select: { id: true, nombre: true, email: true, rol: true },
+    select: { id: true, nombre: true, email: true, rol: true, telefono: true },
   });
   if (!usuario) throw { status: 404, message: "Usuario no encontrado" };
   return usuario;
@@ -110,6 +113,6 @@ export const actualizarUsuario = async (id, datosActualizados) => {
   return await prisma.usuarios.update({
     where: { id: Number(id) },
     data: datosActualizados,
-    select: { id: true, nombre: true, email: true, rol: true },
+    select: { id: true, nombre: true, email: true, rol: true, telefono: true },
   });
 };

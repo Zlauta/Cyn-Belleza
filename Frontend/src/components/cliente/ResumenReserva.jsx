@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, User } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "react-hot-toast";
 
 const ResumenReserva = ({
   servicio,
@@ -12,16 +13,47 @@ const ResumenReserva = ({
   onCancelar,
   cargando,
 }) => {
+  // Estados para el formulario (por si es invitado)
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
 
+  // 👉 NUEVO ESTADO: Para guardar al usuario logueado
+  const [usuarioLocal, setUsuarioLocal] = useState(null);
+
+  // 👉 BUSCAMOS AL USUARIO AL CARGAR EL COMPONENTE
+  useEffect(() => {
+    // Intentamos buscar si guardaste al usuario en LocalStorage
+    // (Ajustá la palabra 'usuario' por la clave que uses vos en tu app)
+    const usuarioGuardado = localStorage.getItem("usuario");
+
+    if (usuarioGuardado) {
+      try {
+        const datosUsuario = JSON.parse(usuarioGuardado);
+        setUsuarioLocal(datosUsuario);
+      } catch (error) {
+        console.error("Error leyendo usuario de LocalStorage");
+      }
+    }
+  }, []);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // 👉 CASO 1: CLIENTE LOGUEADO
+    if (usuarioLocal) {
+      return onConfirmar({
+        nombre: usuarioLocal.nombre || usuarioLocal.name, // Ajustá según cómo vengan tus datos
+        telefono:
+          usuarioLocal.telefono || usuarioLocal.phone || "No especificado",
+        clienteId: usuarioLocal.id,
+      });
+    }
+
+    // 👉 CASO 2: CLIENTE INVITADO (Valida inputs)
     if (nombre.trim().length < 3) {
       return toast.error("Por favor, ingresá tu nombre completo.");
     }
 
-    // Validamos que el teléfono tenga entre 8 y 15 dígitos y sean solo números
     const telRegex = /^\d{8,15}$/;
     if (!telRegex.test(telefono)) {
       return toast.error(
@@ -70,36 +102,59 @@ const ResumenReserva = ({
         </div>
       </div>
 
-      {/* 👉 FORMULARIO DEL CLIENTE */}
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">
-            Tu Nombre y Apellido
-          </label>
-          <input
-            type="text"
-            required
-            minLength={3}
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ej: María Gómez"
-            className="w-full px-4 py-3 border border-pink-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">
-            Tu WhatsApp
-          </label>
-          <input
-            type="tel"
-            required
-            pattern="[0-9]*" // Sugiere teclado numérico en celulares
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value.replace(/\D/g, ""))} // Limpia letras al escribir
-            placeholder="Ej: 3811234567"
-            className="w-full px-4 py-3 border border-pink-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
-          />
-        </div>
+        {/* 👉 RENDERIZADO INTELIGENTE */}
+        {usuarioLocal ? (
+          // Vista si hay usuario logueado
+          <div className="bg-white border border-pink-200 p-4 rounded-xl flex items-center gap-4 mb-4">
+            <div className="bg-pink-100 p-3 rounded-full">
+              <User className="w-6 h-6 text-pink-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">
+                Reservando como:
+              </p>
+              <p className="font-bold text-gray-900">
+                {usuarioLocal.nombre || usuarioLocal.name}
+              </p>
+              {usuarioLocal.telefono && (
+                <p className="text-xs text-gray-400">{usuarioLocal.telefono}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          // Vista si NO hay usuario (Pide inputs)
+          <>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Tu Nombre y Apellido
+              </label>
+              <input
+                type="text"
+                required
+                minLength={3}
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej: María Gómez"
+                className="w-full px-4 py-3 border border-pink-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Tu WhatsApp
+              </label>
+              <input
+                type="tel"
+                required
+                pattern="[0-9]*"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value.replace(/\D/g, ""))}
+                placeholder="Ej: 3811234567"
+                className="w-full px-4 py-3 border border-pink-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+              />
+            </div>
+          </>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <button

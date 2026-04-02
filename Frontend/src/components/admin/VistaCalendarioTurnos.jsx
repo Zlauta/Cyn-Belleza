@@ -13,6 +13,7 @@ import {
   addMonths,
   subMonths,
   isToday,
+  isSameWeek,
 } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -62,7 +63,6 @@ const VistaCalendarioTurnos = ({
           <div className="min-w-[700px] lg:min-w-full">
             <div className="grid grid-cols-7 border-b border-gray-50">
               {["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"].map((dia) => (
-                
                 <div
                   key={dia}
                   className="py-3 text-center text-xs font-bold text-gray-400"
@@ -114,19 +114,77 @@ const VistaCalendarioTurnos = ({
       </div>
 
       <div className="w-full xl:w-80 flex flex-col gap-6 shrink-0">
+        {/* 1. CONTADOR DE LA SEMANA */}
         <div className="bg-pink-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-          <h3 className="font-bold text-pink-100 tracking-wider text-sm mb-4">
-            HOY
+          <h3 className="font-bold text-pink-100 tracking-wider text-sm mb-4 uppercase">
+            Esta Semana
           </h3>
           <div className="flex items-baseline gap-2 mb-1">
             <span className="text-5xl font-black">
               {
                 turnos.filter(
-                  (t) => isToday(t.fechaObj) && t.estado !== "CANCELADO",
+                  (t) =>
+                    isSameWeek(t.fechaObj, new Date(), { weekStartsOn: 1 }) &&
+                    t.estado !== "CANCELADO",
                 ).length
               }
             </span>
             <span className="text-xl font-medium text-pink-100">Turnos</span>
+          </div>
+        </div>
+
+        {/* 2. TARJETAS DE PRÓXIMOS TURNOS */}
+        <div className="flex flex-col gap-3">
+          <h3 className="font-bold text-gray-800 text-sm tracking-wider uppercase ml-1">
+            Próximos Turnos
+          </h3>
+
+          {/* Contenedor con scroll (max-h te asegura que no se haga infinito) */}
+          <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-1 pb-4">
+            {turnos
+              .filter(
+                (t) =>
+                  isSameWeek(t.fechaObj, new Date(), { weekStartsOn: 1 }) &&
+                  t.estado !== "CANCELADO",
+              )
+              .sort((a, b) => a.fechaObj - b.fechaObj) // Ordenamos por fecha y hora
+              .map((turno) => (
+                <div
+                  key={turno.id}
+                  onClick={() => abrirModalEditar(turno)}
+                  className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-2 cursor-pointer hover:border-pink-300 hover:shadow-md transition-all group"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-pink-600 capitalize">
+                      {format(turno.fechaObj, "EEEE dd", { locale: es })}
+                    </span>
+                    <span className="text-xs font-bold bg-gray-50 group-hover:bg-pink-50 text-gray-600 group-hover:text-pink-600 px-2 py-1 rounded-md transition-colors">
+                      {turno.hora} hs
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm truncate">
+                      {turno.cliente}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                      {turno.servicio?.nombre || "Servicio no especificado"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+            {/* Mensaje por si la semana está vacía */}
+            {turnos.filter(
+              (t) =>
+                isSameWeek(t.fechaObj, new Date(), { weekStartsOn: 1 }) &&
+                t.estado !== "CANCELADO",
+            ).length === 0 && (
+              <div className="text-center p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <p className="text-sm text-gray-500 font-medium">
+                  No hay turnos para esta semana.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

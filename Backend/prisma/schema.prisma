@@ -17,6 +17,7 @@ model Usuarios {
   nombre      String
   email       String   @unique
   contrasenia String
+  telefono    String
   createdAt   DateTime @default(now())
   rol         Rol      @default(CLIENTE)
 
@@ -40,7 +41,7 @@ model Turno {
   fechaHora DateTime
   estado    Estado   @default(PENDIENTE)
 
-  stadoPago EstadoPago @default(PENDIENTE)
+  estadoPago EstadoPago @default(PENDIENTE)
   transaccionId String?
 
   clienteId Int?

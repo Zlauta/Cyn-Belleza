@@ -132,7 +132,7 @@ const Reservar = () => {
               />
             </svg>
           </div>
-          <h2 className="text-3xl font-black text-gray-900 mb-2">
+          <h2 className="text-3xl text-center font-black text-gray-900 mb-3">
             ¡Todo Listo!
           </h2>
           <p className="text-gray-500 mb-8">
