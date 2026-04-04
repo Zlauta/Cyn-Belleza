@@ -1,5 +1,5 @@
 import React from "react";
-import { Scissors, Sparkles, UserPlus, Eye } from "lucide-react";
+import { Scissors, Sparkles, Eye } from "lucide-react";
 
 const MetricasTarjetas = ({ turnos }) => {
   const hoyStr = new Date().toISOString().split("T")[0];
@@ -37,6 +37,8 @@ const MetricasTarjetas = ({ turnos }) => {
         "peinado",
         "peluquería",
         "alisado",
+        "balayage",
+        "botox",
       ]),
       icon: Scissors,
       color: "text-pink-600",
@@ -45,13 +47,14 @@ const MetricasTarjetas = ({ turnos }) => {
     },
     {
       id: 2,
-      titulo: "Uñas",
+      titulo: "Manicura y Pedicura",
       ...calcularMetrica([
         "uña",
         "esculpidas",
         "manicura",
         "pedicura",
         "kapping",
+        "semipermanente",
       ]),
       icon: Sparkles,
       color: "text-purple-600",
@@ -60,32 +63,27 @@ const MetricasTarjetas = ({ turnos }) => {
     },
     {
       id: 3,
-      titulo: "Pestañas & Cejas",
+      titulo: "Estética Facial",
       ...calcularMetrica([
         "pestaña",
         "lifting",
         "ceja",
         "perfilado",
-        "extensiones",
+        "laminado",
+        "maquillaje",
+        "limpieza",
+        "facial",
       ]),
       icon: Eye,
       color: "text-rose-600",
       bg: "bg-rose-100",
       trend: "Hoy",
     },
-    {
-      id: 4,
-      titulo: "Maquillaje",
-      ...calcularMetrica(["maquillaje", "rimmel", "delineador", "base", "rubor"]),
-      icon: UserPlus,
-      color: "text-pink-500",
-      bg: "bg-pink-50",
-      trend: "Hoy",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    // 👉 FIX: Cambiado a grid-cols-3 en desktop para que ocupe todo el ancho sin huecos
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {METRICAS.map((metrica) => {
         const Icono = metrica.icon;
         return (
