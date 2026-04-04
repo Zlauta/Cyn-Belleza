@@ -21,10 +21,6 @@ const PublicLayout = ({ children }) => (
     <Footer />
   </div>
 );
-
-const QuienesSomos = () => <div>Quiénes Somos</div>;
-
-
 // 👉 EL PATOVICA REAL
 const RutaProtegida = ({ children, requiereAdmin = false }) => {
   // 1. Buscamos las credenciales
@@ -68,14 +64,6 @@ const AppRoutes = () => {
           element={
             <PublicLayout>
               <Servicios />
-            </PublicLayout>
-          }
-        />
-        <Route
-          path="/nosotros"
-          element={
-            <PublicLayout>
-              <QuienesSomos />
             </PublicLayout>
           }
         />

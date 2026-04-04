@@ -7,10 +7,8 @@ const SelectorServicios = ({
   servicioSeleccionado,
   setServicioSeleccionado,
 }) => {
-  // Por defecto abrimos la primera categoría
-  const [categoriaAbierta, setCategoriaAbierta] = useState(
-    categorias[0]?.categoria,
-  );
+  // 👉 FIX: Lo iniciamos en null para que todas las categorías arranquen cerradas
+  const [categoriaAbierta, setCategoriaAbierta] = useState(null);
 
   return (
     <section>
@@ -79,7 +77,7 @@ const SelectorServicios = ({
                               {srv.nombre}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {srv.duracion}
+                              {srv.duracion} min
                             </p>
                           </div>
 

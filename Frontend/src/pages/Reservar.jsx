@@ -2,26 +2,15 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { startOfToday } from "date-fns";
 import { toast } from "react-hot-toast";
+import { useLocation } from "react-router-dom";
 import SelectorServicios from "../components/cliente/SelectorServicios.jsx";
 import SelectorFechaHora from "../components/cliente/SelectorFechaHora.jsx";
 import ResumenReserva from "../components/cliente/ResumenReserva.jsx";
 
-// Importamos nuestro nuevo service
 import {
   obtenerServiciosPublicos,
   crearReservaPublica,
-} from "../services/reservas.service.js";
-
-// Mock de horarios fijos (Si después querés, conectamos esto también al back para ver disponibilidad real)
-const HORARIOS_DISPONIBLES = [
-  "09:00",
-  "10:00",
-  "11:30",
-  "13:00",
-  "15:30",
-  "17:00",
-  "18:30",
-];
+} from "../services/reservas.service.js"; // 👉 Asegurate que esta ruta sea correcta
 
 const Reservar = () => {
   const hoy = startOfToday();
@@ -37,7 +26,8 @@ const Reservar = () => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoy);
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
 
-  // 👉 AL CARGAR LA PÁGINA: Traemos los servicios del backend
+  const location = useLocation();
+
   useEffect(() => {
     const cargarServicios = async () => {
       try {
@@ -45,7 +35,7 @@ const Reservar = () => {
         const serviciosDb = await obtenerServiciosPublicos();
 
         if (serviciosDb) {
-          // Lógica para agrupar el array plano en categorías: { "Peluquería": [...], "Uñas": [...] }
+          // Lógica para agrupar en categorías
           const agrupados = serviciosDb.reduce((acc, servicio) => {
             const cat = servicio.categoria || "Otros Servicios";
             if (!acc[cat]) acc[cat] = [];
@@ -53,13 +43,30 @@ const Reservar = () => {
             return acc;
           }, {});
 
-          // Lo convertimos al formato que espera nuestro SelectorServicios
           const arrayCategorias = Object.keys(agrupados).map((cat) => ({
             categoria: cat,
             servicios: agrupados[cat],
           }));
 
           setCategoriasServicios(arrayCategorias);
+
+          // 👉 FIX: LA PRESELECCIÓN AHORA SÍ FUNCIONA Y NO ROMPE NADA
+          if (location.state && location.state.preseleccionId) {
+            const servicioQueCoincide = serviciosDb.find(
+              (s) => s.id === location.state.preseleccionId,
+            );
+
+            if (servicioQueCoincide) {
+              setServicioSeleccionado(servicioQueCoincide);
+              // Hacemos un scroll suave para que el usuario vea que ahora le toca elegir la fecha
+              setTimeout(() => {
+                window.scrollTo({
+                  top: window.innerHeight / 2,
+                  behavior: "smooth",
+                });
+              }, 300);
+            }
+          }
         }
       } catch (error) {
         toast.error("Hubo un problema al cargar los servicios.");
@@ -69,7 +76,7 @@ const Reservar = () => {
     };
 
     cargarServicios();
-  }, []);
+  }, [location.state]);
 
   const resetearReserva = () => {
     setServicioSeleccionado(null);
@@ -77,12 +84,10 @@ const Reservar = () => {
     setFechaSeleccionada(hoy);
   };
 
-  // 👉 EL POST AL BACKEND
   const confirmarReserva = async (datosCliente) => {
     setEnviandoReserva(true);
     const loadToast = toast.loading("Procesando tu reserva...");
 
-    // Unimos la fecha seleccionada con la hora seleccionada
     const fechaHoraUnida = new Date(fechaSeleccionada);
     const [horas, minutos] = horarioSeleccionado.split(":");
     fechaHoraUnida.setHours(parseInt(horas), parseInt(minutos), 0);
@@ -90,7 +95,7 @@ const Reservar = () => {
     const payload = {
       servicioId: servicioSeleccionado.id,
       fechaHora: fechaHoraUnida.toISOString(),
-      estado: "PENDIENTE", // Entra como pendiente hasta que Cynthia lo confirme
+      estado: "PENDIENTE",
       clienteManual: `${datosCliente.nombre} - Tel: ${datosCliente.telefono}`,
     };
 
@@ -106,7 +111,6 @@ const Reservar = () => {
     }
   };
 
-  // PANTALLA DE ÉXITO
   if (reservaExitosa) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -114,7 +118,6 @@ const Reservar = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          // 👉 AGREGAMOS overflow-x-hidden ACÁ:
           className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans pb-32 overflow-x-hidden"
         >
           <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -186,7 +189,6 @@ const Reservar = () => {
               setFechaSeleccionada={setFechaSeleccionada}
               horarioSeleccionado={horarioSeleccionado}
               setHorarioSeleccionado={setHorarioSeleccionado}
-              horariosDisponibles={HORARIOS_DISPONIBLES}
               servicioSeleccionado={servicioSeleccionado}
               hoy={hoy}
             />

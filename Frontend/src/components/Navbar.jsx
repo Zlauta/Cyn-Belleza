@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Settings } from "lucide-react"; // Sumé el icono de Settings
 import toast from "react-hot-toast";
 
 const LINKS = [
   { nombre: "Inicio", ruta: "/" },
   { nombre: "Servicios", ruta: "/servicios" },
-  { nombre: "Nosotros", ruta: "/nosotros" },
+  { nombre: "Nosotros", ruta: "/#nosotros" },
 ];
 
 const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
-
-  // 👉 1. CREAMOS LOS ESTADOS
   const [estaLogueado, setEstaLogueado] = useState(false);
   const [usuario, setUsuario] = useState(null);
 
@@ -22,7 +20,6 @@ const Navbar = () => {
 
   const esAdmin = usuario?.rol === "ADMIN";
 
-  // 👉 2. USE EFFECT: Revisa el token apenas carga y cada vez que cambiamos de página
   useEffect(() => {
     const token = localStorage.getItem("token");
     const usuarioString = localStorage.getItem("usuario");
@@ -34,22 +31,27 @@ const Navbar = () => {
     } else {
       setUsuario(null);
     }
-  }, [location]); // Al poner location, cuando el Login nos mande a '/', esto se actualiza al instante
+  }, [location]);
 
   const handleLogout = () => {
-    // Borramos de la memoria
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
-
-    // 👉 3. Actualizamos el estado para que el Navbar cambie en milisegundos
     setEstaLogueado(false);
     setUsuario(null);
-
-    toast.success("¡Sesión cerrada! Esperamos verte pronto.", {
-      icon: "👋",
-    });
-
+    toast.success("¡Sesión cerrada! Esperamos verte pronto.", { icon: "👋" });
     navigate("/");
+  };
+
+  const handleNavClick = (e, link) => {
+    if (link.nombre === "Nosotros") {
+      if (location.pathname === "/") {
+        e.preventDefault();
+        document
+          .getElementById("nosotros")
+          ?.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+    setMenuAbierto(false);
   };
 
   return (
@@ -66,12 +68,17 @@ const Navbar = () => {
           {/* 💻 LINKS DESKTOP */}
           <div className="hidden md:flex items-center space-x-2">
             {LINKS.map((link) => {
-              const estaActivo = location.pathname === link.ruta;
+              const estaActivo =
+                link.nombre === "Nosotros"
+                  ? location.hash === "#nosotros"
+                  : location.pathname === link.ruta &&
+                    location.hash !== "#nosotros";
 
               return (
                 <Link
                   key={link.nombre}
                   to={link.ruta}
+                  onClick={(e) => handleNavClick(e, link)}
                   className="relative px-4 py-2"
                 >
                   {estaActivo && (
@@ -100,14 +107,12 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* 🚀 BOTONES DERECHA (Lógica Condicional) */}
+          {/* 🚀 BOTONES DERECHA DESKTOP */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* Si está logueado mostramos saludo y botón de salir, si no, botón de entrar */}
             {estaLogueado ? (
               <div className="flex items-center gap-3 border-r pr-4 border-gray-200">
                 <span className="text-sm font-semibold text-gray-700">
-                  Hola, {usuario?.nombre?.split(" ")[0]}{" "}
-                  {/* Muestra solo el primer nombre */}
+                  Hola, {usuario?.nombre?.split(" ")[0]}
                 </span>
                 <button
                   onClick={handleLogout}
@@ -127,7 +132,6 @@ const Navbar = () => {
               </Link>
             )}
 
-            {/* 👉 BOTÓN SECRETO SOLO PARA ADMINS */}
             {esAdmin && (
               <Link
                 to="/admin"
@@ -176,12 +180,17 @@ const Navbar = () => {
           >
             <div className="px-4 pt-2 pb-6 space-y-2 shadow-xl">
               {LINKS.map((link) => {
-                const estaActivo = location.pathname === link.ruta;
+                const estaActivo =
+                  link.nombre === "Nosotros"
+                    ? location.hash === "#nosotros"
+                    : location.pathname === link.ruta &&
+                      location.hash !== "#nosotros";
+
                 return (
                   <Link
                     key={link.nombre}
                     to={link.ruta}
-                    onClick={() => setMenuAbierto(false)}
+                    onClick={(e) => handleNavClick(e, link)}
                     className={`block px-4 py-3 rounded-xl text-base font-semibold transition-colors ${
                       estaActivo
                         ? "bg-pink-50 text-pink-600"
@@ -194,7 +203,17 @@ const Navbar = () => {
               })}
 
               <div className="pt-4 flex flex-col gap-3">
-                {/* Lógica condicional para móvil */}
+                {/* 👉 FIX: Agregamos el botón del Panel Admin en el Menú Móvil */}
+                {esAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMenuAbierto(false)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-pink-100 text-pink-600 rounded-xl font-bold hover:bg-pink-50 transition-colors"
+                  >
+                    <Settings className="w-5 h-5" /> Panel de Administración
+                  </Link>
+                )}
+
                 {estaLogueado ? (
                   <button
                     onClick={() => {
