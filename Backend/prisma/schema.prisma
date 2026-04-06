@@ -44,6 +44,8 @@ model Turno {
   estadoPago EstadoPago @default(PENDIENTE)
   transaccionId String?
 
+  recordatorioEnviado Boolean @default(false)
+
   clienteId Int?
   cliente   Usuarios? @relation("Turnos", fields: [clienteId], references: [id])
 
