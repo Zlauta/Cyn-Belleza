@@ -9,6 +9,7 @@ import {
   isSameDay,
 } from "date-fns";
 import { prisma } from "../db.js";
+import { enviarNotificacionTurno } from "./whatsapp.service.js";
 
 export const obtenerHorariosDisponibles = async (fecha, servicioId) => {
   // 1. Obtenemos el servicio para saber cuánto dura
@@ -47,7 +48,7 @@ export const obtenerHorariosDisponibles = async (fecha, servicioId) => {
     orderBy: { fechaHora: "asc" },
   });
 
- const ahora = new Date();
+  const ahora = new Date();
   const fechaConsultada = parseISO(fecha);
   const esHoy = isSameDay(fechaConsultada, ahora);
 
@@ -55,30 +56,30 @@ export const obtenerHorariosDisponibles = async (fecha, servicioId) => {
   let tiempoActual = parseISO(`${fecha}T${horaInicio}:00`);
   const tiempoLimite = parseISO(`${fecha}T${horaFin}:00`);
 
-  while (isBefore(addMinutes(tiempoActual, duracionSrv), tiempoLimite) || 
-         format(addMinutes(tiempoActual, duracionSrv), 'HH:mm') === horaFin) {
-    
+  while (
+    isBefore(addMinutes(tiempoActual, duracionSrv), tiempoLimite) ||
+    format(addMinutes(tiempoActual, duracionSrv), "HH:mm") === horaFin
+  ) {
     const finPropuesto = addMinutes(tiempoActual, duracionSrv);
-    
+
     // 1. Verificamos solapamiento con otros turnos
-    const seSolapa = turnosOcupados.some(t => {
+    const seSolapa = turnosOcupados.some((t) => {
       const tInicio = new Date(t.fechaHora);
       const tFin = addMinutes(tInicio, parseInt(t.servicio.duracion));
-      return (tiempoActual < tFin) && (finPropuesto > tInicio);
+      return tiempoActual < tFin && finPropuesto > tInicio;
     });
 
     // 2. 🔥 NUEVA REGLA: Si es hoy, la hora debe ser posterior a "ahora"
     const esHoraValida = !esHoy || isAfter(tiempoActual, ahora);
 
     if (!seSolapa && esHoraValida) {
-      disponibles.push(format(tiempoActual, 'HH:mm'));
+      disponibles.push(format(tiempoActual, "HH:mm"));
     }
 
     tiempoActual = addMinutes(tiempoActual, 30);
   }
 
   return disponibles;
-
 };
 
 export const crearTurno = async (usuarioSolicitante, datos) => {
@@ -102,7 +103,7 @@ export const crearTurno = async (usuarioSolicitante, datos) => {
     finalClienteId = parseInt(usuarioSolicitante.id);
   }
 
-  return await prisma.turno.create({
+  const nuevoTurno = await prisma.turno.create({
     data: {
       fechaHora: new Date(datos.fechaHora),
       clienteId: finalClienteId,
@@ -115,6 +116,13 @@ export const crearTurno = async (usuarioSolicitante, datos) => {
       cliente: { select: { nombre: true, email: true } },
     },
   });
+
+  // Enviar notificación de WhatsApp
+  enviarNotificacionTurno(nuevoTurno).catch((err) =>
+    console.log("Fallo silenciado del bot:", err.message),
+  );
+
+  return nuevoTurno;
 };
 
 export const obtenerTurnos = async (filtro = {}) => {
@@ -235,7 +243,7 @@ export const eliminarTurnoFisico = async (id) => {
 
 export const crearTurnoPublico = async (datosReserva) => {
   // 🔥 ESCUDO DE SEGURIDAD: Por más que manden otro estado, forzamos PENDIENTE
-  return await prisma.turno.create({
+  const nuevoTurno = await prisma.turno.create({
     data: {
       servicioId: Number(datosReserva.servicioId),
       fechaHora: new Date(datosReserva.fechaHora),
@@ -246,4 +254,11 @@ export const crearTurnoPublico = async (datosReserva) => {
       servicio: true, // Opcional: devuelve info del servicio al front si la necesitás
     },
   });
+
+  // Enviar notificación de WhatsApp
+  enviarNotificacionTurno(nuevoTurno).catch((err) =>
+    console.log("Fallo silenciado del bot:", err.message),
+  );
+
+  return nuevoTurno;
 };
