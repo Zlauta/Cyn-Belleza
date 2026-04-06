@@ -135,3 +135,6 @@ Desktop.ini
 /src/generated/
 /prisma/generated/
 dist/
+# Autenticación y Caché de WhatsApp Bot
+.wwebjs_auth/
+.wwebjs_cache/
