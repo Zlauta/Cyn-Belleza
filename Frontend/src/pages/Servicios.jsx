@@ -7,11 +7,11 @@ import { obtenerServiciosPublicos } from "../services/reservas.service.js";
 const obtenerImagenPorCategoria = (categoria) => {
   const imagenes = {
     Peluquería:
-      "https://images.unsplash.com/photo-1634449571010-02389ed0f9b0?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8cGVsdXF1ZXIlQzMlQURhfGVufDB8fDB8fHww",
+      "public/assets/Peluqueria.jpeg",
     "Manicura y Pedicura":
-      "https://www.essie.es/-/media/project/loreal/brand-sites/essie/emea/es/articles/tips_trends/pedicura-francesa/pedicura-francesa.jpg?rev=805afa579479489a8d1240ad14ec5720",
+      "public/assets/Uñas.png",
     "Estética Facial":
-      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dHJhdGFtaWVudG8lMjBmYWNpYWx8ZW58MHx8MHx8fDA%3D",
+      "public/assets/Maquillaje2.png",
     default:
       "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?q=80&w=400",
   };

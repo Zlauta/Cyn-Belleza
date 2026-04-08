@@ -14,20 +14,17 @@ const categorias = [
   {
     id: 1,
     nombre: "Peluquería",
-    imagen:
-      "https://images.unsplash.com/photo-1634449571010-02389ed0f9b0?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8cGVsdXF1ZXIlQzMlQURhfGVufDB8fDB8fHww",
+    imagen: "public/assets/Peluqueria.jpg",
   },
   {
     id: 2,
     nombre: "Manicura y Pedicura",
-    imagen:
-      "https://www.essie.es/-/media/project/loreal/brand-sites/essie/emea/es/articles/tips_trends/pedicura-francesa/pedicura-francesa.jpg?rev=805afa579479489a8d1240ad14ec5720",
+    imagen: "public/assets/Manicura.jpeg",
   },
   {
     id: 3,
     nombre: "Estética Facial",
-    imagen:
-      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dHJhdGFtaWVudG8lMjBmYWNpYWx8ZW58MHx8MHx8fDA%3D",
+    imagen: "public/assets/Maquillaje.jpg",
   },
 ];
 
@@ -81,7 +78,7 @@ const Home = () => {
       <header className="relative bg-gray-900 text-white border-b-[6px] border-pink-600 flex flex-col justify-center min-h-[75vh] lg:min-h-[85vh]">
         <div className="absolute inset-0 opacity-40">
           <img
-            src="https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=1600"
+            src="public/assets/Hero.png"
             alt="Salón de belleza"
             className="w-full h-full object-cover"
           />
@@ -187,13 +184,14 @@ const Home = () => {
 
       {/* 4. SECCIÓN NOSOTROS */}
       {/* 👉 FIX: id "nosotros" agregado explícitamente */}
+      {/* 4. SECCIÓN NOSOTROS */}
       <section id="nosotros" className="bg-white py-20 sm:py-24 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 sm:gap-16 items-center">
           <div className="relative aspect-square max-w-xs sm:max-w-md mx-auto lg:mx-0 w-full order-2 lg:order-1">
             <div className="absolute -inset-4 bg-pink-200 rounded-full opacity-50 blur-3xl animate-pulse"></div>
             <div className="relative w-full h-full bg-gray-100 rounded-full flex items-center justify-center shadow-2xl border-8 border-white overflow-hidden group">
               <img
-                src="https://images.unsplash.com/photo-1595959224623-a5bc2bdcd78b?q=80&w=600"
+                src="public/assets/Salon.jpeg"
                 alt="El salón"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
@@ -208,39 +206,54 @@ const Home = () => {
               <HeartHandshake className="w-5 h-5" /> Nuestra Esencia
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight text-gray-900">
-              Pasión por el <span className="text-pink-600">Detalle</span>
+              Pasión por tu <span className="text-pink-600">Mejor Versión</span>
             </h2>
 
             <div className="mt-6 space-y-4 text-base sm:text-lg text-gray-600 leading-relaxed">
               <p>
-                En <strong>CYN Belleza</strong>, entendemos que tu imagen no es
-                solo estética; es el reflejo de tu bienestar interior, tu
-                confianza y tu personalidad.
+                En <strong>CYN Belleza</strong>, creemos que el talento se nutre
+                con dedicación. Desde que abrimos nuestras puertas en{" "}
+                <strong>2022</strong>, el objetivo siempre fue uno: ofrecerte un
+                servicio de excelencia que resalte tu estilo único.
               </p>
               <p>
-                Con más de 10 años de trayectoria en el mundo del estilismo, nos
-                hemos consolidado como un referente de vanguardia. Nuestro
-                equipo de profesionales se capacita constantemente para
-                ofrecerte técnicas innovadoras, utilizando productos premium que
-                cuidan la salud de tu piel y tu cabello.
+                Soy una apasionada por el crecimiento profesional. Me he
+                capacitado extensamente en peluquería, manicura y maquillaje,
+                buscando siempre estar a la vanguardia de las últimas
+                tendencias.
+              </p>
+              <p>
+                Porque creo firmemente que nunca se deja de aprender,
+                actualmente sigo expandiendo mis conocimientos estudiando
+                barbería. Cada clienta que se sienta en mi sillón recibe el
+                resultado de horas de estudio, esfuerzo y el compromiso de
+                brindar siempre el mejor servicio.
               </p>
             </div>
 
             <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-8 sm:gap-12">
               <div>
                 <span className="text-4xl sm:text-5xl font-black text-pink-600 drop-shadow-sm">
-                  10+
+                  2022
                 </span>
                 <p className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mt-1">
-                  Años de Trayectoria
+                  Año de Inicio
                 </p>
               </div>
               <div>
                 <span className="text-4xl sm:text-5xl font-black text-pink-600 drop-shadow-sm">
-                  5k+
+                  4+
                 </span>
                 <p className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mt-1">
-                  Sonrisas Logradas
+                  Especialidades
+                </p>
+              </div>
+              <div>
+                <span className="text-4xl sm:text-5xl font-black text-pink-600 drop-shadow-sm">
+                  100%
+                </span>
+                <p className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mt-1">
+                  Dedicación
                 </p>
               </div>
             </div>
