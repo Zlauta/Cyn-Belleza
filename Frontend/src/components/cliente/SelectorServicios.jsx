@@ -7,8 +7,16 @@ const SelectorServicios = ({
   servicioSeleccionado,
   setServicioSeleccionado,
 }) => {
-  // 👉 FIX: Lo iniciamos en null para que todas las categorías arranquen cerradas
   const [categoriaAbierta, setCategoriaAbierta] = useState(null);
+
+  // 👉 Opcional pero recomendado: Limpiamos categorías que no tengan servicios activos
+  // Así evitamos mostrar categorías vacías.
+  const categoriasConServiciosActivos = categorias
+    .map((cat) => ({
+      ...cat,
+      servicios: cat.servicios.filter((srv) => srv.activo),
+    }))
+    .filter((cat) => cat.servicios.length > 0);
 
   return (
     <section>
@@ -22,7 +30,8 @@ const SelectorServicios = ({
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {categorias.map((cat) => (
+        {/* 👉 Usamos el array filtrado */}
+        {categoriasConServiciosActivos.map((cat) => (
           <div
             key={cat.categoria}
             className="border-b border-gray-50 last:border-0"
@@ -56,6 +65,7 @@ const SelectorServicios = ({
                   className="overflow-hidden"
                 >
                   <div className="p-2 space-y-1">
+                    {/* 👉 Los servicios ya vienen filtrados por el map de arriba */}
                     {cat.servicios.map((srv) => {
                       const esSeleccionado =
                         servicioSeleccionado?.id === srv.id;
@@ -69,7 +79,6 @@ const SelectorServicios = ({
                               : "hover:bg-gray-50 border border-transparent"
                           }`}
                         >
-                          {/* 👉 FIX: flex-1 y min-w-0 para que el texto respete los límites */}
                           <div className="flex-1 min-w-0 pr-3">
                             <p
                               className={`font-semibold truncate sm:whitespace-normal ${esSeleccionado ? "text-pink-700" : "text-gray-900 group-hover:text-pink-600"}`}
@@ -81,7 +90,6 @@ const SelectorServicios = ({
                             </p>
                           </div>
 
-                          {/* 👉 FIX: shrink-0 para que el precio no se deforme */}
                           <div className="flex items-center gap-3 shrink-0">
                             <span className="font-bold text-gray-900">
                               ${srv.precio.toLocaleString("es-AR")}

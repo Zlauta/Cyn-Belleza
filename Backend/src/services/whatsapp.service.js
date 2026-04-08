@@ -66,7 +66,7 @@ export const enviarNotificacionTurno = async (turno) => {
     const nombreServicio = turno.servicio?.nombre || "Tratamiento";
 
     // 1. Notificar a Cynthia
-    const numeroCyn = "5493815284954@c.us"; // 👉 ACORDATE DE PONER EL NÚMERO REAL ACÁ
+    const numeroCyn = process.env.NUMERO_CYN_BELLEZA; // 👉 ACORDATE DE PONER EL NÚMERO REAL ACÁ
     const msjCyn =
       `📢 *Nuevo Turno Web*\n\n` +
       `👤 Cliente: ${turno.clienteManual || turno.cliente?.nombre}\n` +
@@ -91,7 +91,7 @@ export const enviarNotificacionTurno = async (turno) => {
       const numeroLimpio = telefonoCliente.replace(/\D/g, "");
       const jidCliente = `549${numeroLimpio}@c.us`;
 
-      const aliasMP = "naima0522";
+      const aliasMP = process.env.ALIAS_CYN_BELLEZA;
 
       const msjCliente =
         `¡Hola! ✨ Gracias por elegir *CYN Belleza*.\n\n` +
@@ -99,13 +99,11 @@ export const enviarNotificacionTurno = async (turno) => {
         `📅 Fecha: ${fecha}\n` +
         `⏰ Hora: ${hora}\n\n` +
         `⚠️ *IMPORTANTE PARA CONFIRMAR:*\n` +
-        `Para asegurar tu lugar, necesitamos una seña del 20%. Por favor, transferí al siguiente alias de Uala:\n\n` +
+        `Para asegurar tu lugar, necesitamos una seña del *20%*. Por favor, transferí al siguiente alias de Mercado Pago:\n\n` +
         `💸 *Alias:* ${aliasMP}\n\n` +
-        `📝 *Nuestra Política de Turnos:\n\n`
-        `*Sabemos que pueden surgir imprevistos*.\n\n` 
-        `Podés reprogramar o cancelar tu turno sin perder tu seña avisándonos con al menos *24 horas de anticipación*.\n\n `
-        `Las cancelaciones con menos de 24 hs no tienen devolución de seña\n\n`
-        `Una vez que lo hagas, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.\n\n` +
+        `📝 *Nuestra Política de Turnos:*\n` +
+        `Sabemos que pueden surgir imprevistos. Podés reprogramar o cancelar tu turno sin perder tu seña avisándonos con al menos *24 horas de anticipación*. Las cancelaciones con menos de 24 hs no tienen devolución de seña, para poder respetar el tiempo de nuestras profesionales.\n\n` +
+        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.\n\n` +
         `¡Muchas gracias! Te esperamos.`;
 
       await client.sendMessage(jidCliente, msjCliente);

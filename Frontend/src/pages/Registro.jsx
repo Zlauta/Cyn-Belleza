@@ -1,10 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom"; // Sacamos useNavigate porque usaremos window.location
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { registroService } from "../services/auth.services.js";
+import { registroService, loginService } from "../services/auth.services.js";
 
 const Registro = () => {
   const {
@@ -12,35 +12,59 @@ const Registro = () => {
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
-    const loadToast = toast.loading("Creando tu cuenta...");
+    const loadToast = toast.loading("Creando tu cuenta y logueando...");
 
     try {
-      // 1. Llamamos al servicio
-      const respuesta = await registroService(data);
+      // 1. Llamamos al servicio de registro
+      const respuestaRegistro = await registroService(data);
 
-      // 👉 2. LA MEJORA UX: Guardamos el token automáticamente
-      if (respuesta.token) {
-        localStorage.setItem("token", respuesta.token);
-      }
-      if (respuesta.usuario) {
-        localStorage.setItem("usuario", JSON.stringify(respuesta.usuario));
+      // Buscamos a ver si el registro ya nos trajo el token adentro de "datos"
+      let tokenFinal =
+        respuestaRegistro.token || respuestaRegistro.datos?.token;
+      let usuarioFinal =
+        respuestaRegistro.usuario || respuestaRegistro.datos?.usuario;
+
+      // 2. Si no vino el token, hacemos login automático
+      if (!tokenFinal) {
+        const respuestaLogin = await loginService({
+          email: data.email,
+          contrasenia: data.contrasenia,
+        });
+
+        // 👉 ACÁ ESTABA LA MAGIA: Buscamos adentro de .datos
+        tokenFinal = respuestaLogin.token || respuestaLogin.datos?.token;
+        usuarioFinal = respuestaLogin.usuario || respuestaLogin.datos?.usuario;
       }
 
-      // 3. Mostramos el Toast de éxito
-      toast.success("¡Registro exitoso! Ya puedes reservar.", {
+      // 3. Verificación final y guardado
+      if (tokenFinal) {
+        localStorage.setItem("token", tokenFinal);
+        localStorage.setItem("usuario", JSON.stringify(usuarioFinal));
+
+        toast.success("¡Cuenta creada con éxito! Entrando...", {
+          id: loadToast,
+        });
+
+        // Redirección obligatoria para que el Navbar lea la sesión
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 3000);
+      } else {
+        toast.error("Cuenta creada, pero debes iniciar sesión manualmente", {
+          id: loadToast,
+        });
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 2000);
+      }
+    } catch (error) {
+      toast.error(error.message || "Hubo un error en el proceso", {
         id: loadToast,
       });
-
-      // 👉 4. Lo mandamos directo al Inicio (o a /reservar si preferís)
-      navigate("/");
-    } catch (error) {
-      toast.error(error.message, { id: loadToast });
     }
   };
-
   return (
     <motion.div
       initial={{ opacity: 0, x: -50 }}
@@ -215,7 +239,7 @@ const Registro = () => {
               type="submit"
               className="w-full flex items-center justify-center py-3 px-4 mt-4 border border-transparent rounded-lg shadow-sm text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black font-semibold text-lg transition-colors"
             >
-              Crear Cuenta 
+              Crear Cuenta
               <ArrowRight className="ml-2 h-5 w-5" />
             </motion.button>
           </form>
