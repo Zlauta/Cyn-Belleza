@@ -3,20 +3,21 @@ import * as turnoController from '../controller/turno.controller.js';
 import { verificarToken, esAdministrador } from '../middleware/auth.middleware.js';
 import { validarEsquema } from '../middleware/validador.middleware.js';
 import { crearTurnoSchema, actualizarEstadoTurnoSchema } from '../schemas/turno.schemas.js';
+import { limiterTurnos } from '../middleware/rateLimit.Middleware.js';
 
 export const rutasTurnos = Router();
 // Ventanilla pública para que el cliente consulte qué horas hay libres
 rutasTurnos.get('/disponibilidad', turnoController.consultarDisponibilidad);
-rutasTurnos.post('/publico', turnoController.crearTurnoPublico);
+rutasTurnos.post('/publico',limiterTurnos, turnoController.crearTurnoPublico);
 
 // Todas las rutas de turnos requieren estar logueado, así que ponemos el middleware global para este router
 rutasTurnos.use(verificarToken);
 
 // Clientes y Admin
 
-rutasTurnos.post('/', validarEsquema(crearTurnoSchema), turnoController.crear);
+rutasTurnos.post('/', validarEsquema(crearTurnoSchema),limiterTurnos, turnoController.crear);
 rutasTurnos.get('/', turnoController.obtenerTodos);
-rutasTurnos.patch('/:id/cancelar', turnoController.cancelar); // Usamos PATCH porque solo cambiamos el estado
+rutasTurnos.patch('/:id', turnoController.cancelar); // Usamos PATCH porque solo cambiamos el estado
 
 // Solo para la dueña del salón (o futuros webhooks de Mercado Pago)
 rutasTurnos.patch('/:id/estado', esAdministrador, validarEsquema(actualizarEstadoTurnoSchema), turnoController.actualizarEstado);
