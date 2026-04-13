@@ -13,6 +13,18 @@ export const consultarDisponibilidad = async (req, res, next) => {
   }
 };
 
+export const obtenerMisTurnos = async (req, res, next) => {
+  try {
+    // Usamos req.usuario.id (que viene de tu auth.middleware)
+    const turnos = await turnoService.obtenerMisTurnos(req.usuario.id);
+
+    // Lo mandamos con el mismo formato que armamos en el frontend ({ exito: true, datos: ... })
+    res.status(200).json({ exito: true, datos: turnos });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const crearTurnoPublico = async (req, res, next) => {
   try {
     const { servicioId, fechaHora, clienteManual } = req.body;

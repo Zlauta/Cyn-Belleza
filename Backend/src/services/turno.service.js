@@ -9,7 +9,7 @@ import {
   isSameDay,
 } from "date-fns";
 import { prisma } from "../db.js";
-import { enviarNotificacionTurno } from "./whatsapp.service.js";
+import { enviarAlertaCancelacionAdmin, enviarNotificacionTurno } from "./whatsapp.service.js";
 
 export const obtenerHorariosDisponibles = async (fecha, servicioId) => {
   // 1. Obtenemos el servicio para saber cuánto dura
@@ -113,7 +113,7 @@ export const crearTurno = async (usuarioSolicitante, datos) => {
     },
     include: {
       servicio: true,
-      cliente: { select: { nombre: true, email: true } },
+      cliente: { select: { nombre: true, email: true, telefono: true } },
     },
   });
 
@@ -150,26 +150,28 @@ export const actualizarTurnoCompleto = async (id, datos) => {
   // 1. Verificamos que el turno exista
   await obtenerTurnoPorId(id);
 
-  // 2. Armamos el paquete básico
+  // 2. Armamos el paquete básico de actualización
   const dataActualizada = {
     fechaHora: datos.fechaHora ? new Date(datos.fechaHora) : undefined,
     servicioId: datos.servicioId ? parseInt(datos.servicioId) : undefined,
     estado: datos.estado,
   };
 
-  // 👉 3. LA MAGIA DEL INTERCAMBIO (SWAP)
-  // Si mandó un ID, guardamos el ID y limpiamos el nombre manual
+  // 👉 3. ESCUDO ANTI-BORRADO DE IDs
+  // Solo cambiamos al cliente si viene una orden estricta del frontend
   if (datos.clienteId) {
+    // Si viene un ID válido, vinculamos y limpiamos el texto manual
     dataActualizada.clienteId = parseInt(datos.clienteId);
     dataActualizada.clienteManual = null;
-  }
-  // Si no hay ID pero hay texto, guardamos el texto y limpiamos el ID
-  else if (datos.clienteManual) {
+  } else if (datos.clienteId === null && datos.clienteManual) {
+    // 🔥 MAGIA ACÁ: Solo lo convertimos a "Manual" (y borramos el ID)
+    // SI el frontend mandó explícitamente que el clienteId es null.
+    // Si el frontend simplemente se olvidó de mandarlo (undefined), Prisma NO lo borra.
     dataActualizada.clienteManual = datos.clienteManual;
     dataActualizada.clienteId = null;
   }
 
-  // 4. Guardamos en Prisma y devolvemos el turno con sus relaciones
+  // 4. Guardamos en Prisma y devolvemos
   return await prisma.turno.update({
     where: { id: parseInt(id) },
     data: dataActualizada,
@@ -191,42 +193,51 @@ export const actualizarEstado = async (id, datosActualizacion) => {
 };
 
 // 🔥 LA REGLA DE ORO DE LAS 24 HORAS 🔥
+// 👉 Asegurate de importar la función nueva arriba de todo:
+// import { enviarAlertaCancelacionAdmin } from "./whatsapp.service.js";
+
+// 🔥 LA REGLA DE ORO DE LAS 24 HORAS 🔥
 export const cancelarTurno = async (id, clienteId, rolUsuario) => {
   const turno = await obtenerTurnoPorId(id);
 
-  // 1. Verificamos que el turno le pertenezca a quien lo quiere cancelar (salvo que sea la dueña)
   if (rolUsuario !== "ADMIN" && turno.clienteId !== clienteId) {
-    throw {
-      status: 403,
-      message: "No tienes permiso para cancelar este turno",
-    };
+    throw { status: 403, message: "No tienes permiso para cancelar este turno" };
   }
 
-  // 2. Verificamos que no esté cancelado ya
   if (turno.estado === "CANCELADO") {
     throw { status: 400, message: "El turno ya se encuentra cancelado" };
   }
 
-  // 3. Calculamos la diferencia de tiempo
   const ahora = new Date();
   const fechaDelTurno = new Date(turno.fechaHora);
-
-  // Restamos las fechas (da en milisegundos) y lo pasamos a horas
   const diferenciaEnHoras = (fechaDelTurno - ahora) / (1000 * 60 * 60);
 
-  // 4. Si es cliente y faltan menos de 24 hs, lo bloqueamos
   if (rolUsuario !== "ADMIN" && diferenciaEnHoras < 24) {
     throw {
       status: 400,
-      message:
-        "No puedes cancelar un turno con menos de 24 horas de anticipación. Por favor comunícate directamente con el salón.",
+      message: "No puedes cancelar un turno con menos de 24 horas de anticipación.",
     };
   }
 
-  return await prisma.turno.update({
+  // 1. Actualizamos el turno en la Base de Datos y pedimos que nos devuelva 
+  // los datos del cliente y servicio para armar el mensaje
+  const turnoActualizado = await prisma.turno.update({
     where: { id: parseInt(id) },
     data: { estado: "CANCELADO" },
+    include: {
+      servicio: true,
+      cliente: true // Necesitamos esto para saber cómo se llama
+    }
   });
+
+  // 👉 2. MANDAMOS EL WHATSAPP A TU MAMÁ
+  // Le ponemos el .catch para que si el celu de tu mamá no tiene internet o 
+  // el bot se desconectó, el turno se cancele igual en la página web y no tire error.
+  enviarAlertaCancelacionAdmin(turnoActualizado).catch((err) =>
+    console.log("Fallo silenciado del bot al cancelar:", err.message),
+  );
+
+  return turnoActualizado;
 };
 
 export const eliminarTurnoFisico = async (id) => {
@@ -261,4 +272,19 @@ export const crearTurnoPublico = async (datosReserva) => {
   );
 
   return nuevoTurno;
+};
+
+// Trae los turnos específicos de un cliente logueado
+export const obtenerMisTurnos = async (clienteId) => {
+  return await prisma.turno.findMany({
+    where: {
+      clienteId: parseInt(clienteId),
+      estado: { not: "CANCELADO" },
+       fechaHora: { gte: new Date() }, // Solo futuros
+    },
+    include: {
+      servicio: true,
+    },
+    orderBy: { fechaHora: "asc" },
+  });
 };

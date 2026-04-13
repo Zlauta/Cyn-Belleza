@@ -17,7 +17,9 @@ rutasTurnos.use(verificarToken);
 
 rutasTurnos.post('/', validarEsquema(crearTurnoSchema),limiterTurnos, turnoController.crear);
 rutasTurnos.get('/', turnoController.obtenerTodos);
+rutasTurnos.get('/mis-turnos', turnoController.obtenerMisTurnos);
 rutasTurnos.patch('/:id', turnoController.cancelar); // Usamos PATCH porque solo cambiamos el estado
+
 
 // Solo para la dueña del salón (o futuros webhooks de Mercado Pago)
 rutasTurnos.patch('/:id/estado', esAdministrador, validarEsquema(actualizarEstadoTurnoSchema), turnoController.actualizarEstado);

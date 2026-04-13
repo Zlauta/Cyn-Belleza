@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, LogOut, Settings } from "lucide-react"; // Sumé el icono de Settings
+import { Menu, X, User, LogOut, Settings, CalendarClock } from "lucide-react"; // 👉 Sumé CalendarClock
 import toast from "react-hot-toast";
+
+// 👉 IMPORTAMOS TU SERVICIO
+import { obtenerMisTurnosService } from "../services/turno.services.js";
 
 const LINKS = [
   { nombre: "Inicio", ruta: "/" },
@@ -15,10 +18,35 @@ const Navbar = () => {
   const [estaLogueado, setEstaLogueado] = useState(false);
   const [usuario, setUsuario] = useState(null);
 
+  // 👉 ESTADO PARA CONTROLAR SI MOSTRAMOS EL BOTÓN
+  const [tieneTurnos, setTieneTurnos] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
 
   const esAdmin = usuario?.rol === "ADMIN";
+
+  // 👉 FUNCIÓN PARA VERIFICAR TURNOS EN SEGUNDO PLANO
+  const verificarTurnosActivos = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setTieneTurnos(false);
+      return;
+    }
+
+    try {
+      const turnos = await obtenerMisTurnosService();
+      if (turnos && Array.isArray(turnos)) {
+        // Solo mostramos si hay turnos que NO estén cancelados o finalizados
+        const turnosPendientes = turnos.filter(
+          (t) => t.estado !== "CANCELADO" && t.estado !== "FINALIZADO",
+        );
+        setTieneTurnos(turnosPendientes.length > 0);
+      }
+    } catch (error) {
+      console.error("Error al verificar turnos en el Navbar", error);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -31,6 +59,13 @@ const Navbar = () => {
     } else {
       setUsuario(null);
     }
+
+    // Verificamos apenas carga o cambia la ruta
+    verificarTurnosActivos();
+
+    // 👉 ESCUCHAMOS EL EVENTO CUANDO SE CREA O CANCELA UN TURNO
+    window.addEventListener("storage", verificarTurnosActivos);
+    return () => window.removeEventListener("storage", verificarTurnosActivos);
   }, [location]);
 
   const handleLogout = () => {
@@ -38,6 +73,7 @@ const Navbar = () => {
     localStorage.removeItem("usuario");
     setEstaLogueado(false);
     setUsuario(null);
+    setTieneTurnos(false); // Limpiamos el botón al salir
     toast.success("¡Sesión cerrada! Esperamos verte pronto.", { icon: "👋" });
     navigate("/");
   };
@@ -141,6 +177,17 @@ const Navbar = () => {
               </Link>
             )}
 
+            {/* 👉 BOTÓN MÁGICO DE MIS TURNOS (DESKTOP) */}
+            {estaLogueado && !esAdmin && tieneTurnos && (
+              <Link
+                to="/mis-turnos"
+                className="flex items-center gap-1 text-pink-600 hover:text-pink-800 font-bold text-sm transition-colors mr-2"
+              >
+                <CalendarClock className="w-4 h-4" />
+                Mis Turnos
+              </Link>
+            )}
+
             <Link to="/reservar">
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -176,9 +223,9 @@ const Navbar = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden overflow-hidden bg-white border-t border-gray-100"
+            className="md:hidden overflow-hidden bg-white border-t border-gray-100 shadow-xl"
           >
-            <div className="px-4 pt-2 pb-6 space-y-2 shadow-xl">
+            <div className="px-4 pt-2 pb-6 space-y-2 shadow-inner">
               {LINKS.map((link) => {
                 const estaActivo =
                   link.nombre === "Nosotros"
@@ -202,8 +249,7 @@ const Navbar = () => {
                 );
               })}
 
-              <div className="pt-4 flex flex-col gap-3">
-                {/* 👉 FIX: Agregamos el botón del Panel Admin en el Menú Móvil */}
+              <div className="pt-4 flex flex-col gap-3 border-t border-gray-100 mt-2">
                 {esAdmin && (
                   <Link
                     to="/admin"
@@ -211,6 +257,17 @@ const Navbar = () => {
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-pink-100 text-pink-600 rounded-xl font-bold hover:bg-pink-50 transition-colors"
                   >
                     <Settings className="w-5 h-5" /> Panel de Administración
+                  </Link>
+                )}
+
+                {/* 👉 BOTÓN MÁGICO DE MIS TURNOS (MÓVIL) */}
+                {estaLogueado && !esAdmin && tieneTurnos && (
+                  <Link
+                    to="/mis-turnos"
+                    onClick={() => setMenuAbierto(false)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-pink-50 border border-pink-200 text-pink-600 rounded-xl font-bold hover:bg-pink-100 transition-colors"
+                  >
+                    <CalendarClock className="w-5 h-5" /> Mis Turnos Activos
                   </Link>
                 )}
 

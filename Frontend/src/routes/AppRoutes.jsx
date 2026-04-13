@@ -13,6 +13,7 @@ import Dashboard from "../pages/admin/Dashboard.jsx";
 import AdminServicios from "../pages/admin/AdminServicio.jsx";
 import AdminTurnos from "../pages/admin/AdminTurnos.jsx";
 import AdminUsuarios from "../pages/admin/AdminUsuario.jsx";
+import MisTurnos from "../pages/MisTurnos.jsx";
 
 const PublicLayout = ({ children }) => (
   <div>
@@ -73,6 +74,17 @@ const AppRoutes = () => {
             <PublicLayout>
               <Reservar />
             </PublicLayout>
+          }
+        />
+
+        <Route
+          path="/mis-turnos"
+          element={
+            <RutaProtegida requiereAdmin={false}>
+              <PublicLayout>
+                <MisTurnos />
+              </PublicLayout>
+            </RutaProtegida>
           }
         />
 

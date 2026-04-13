@@ -39,7 +39,7 @@ export const actualizarEstadoTurno = async (id, nuevoEstado) => {
 
 export const cancelarTurnoService = async (id) => {
   try {
-    const { data } = await clienteAxios.patch(`/turnos/${id}/cancelar`);
+    const { data } = await clienteAxios.patch(`/turnos/${id}`, { estado: 'CANCELADO' });
     return data;
   } catch (error) {
     atraparError(error);
@@ -50,6 +50,16 @@ export const eliminarTurnoService = async (id) => {
   try {
     const { data } = await clienteAxios.delete(`/turnos/${id}`);
     return data;
+  } catch (error) {
+    atraparError(error);
+  }
+};
+
+// 👉 Agregá esto a tu archivo actual
+export const obtenerMisTurnosService = async () => {
+  try {
+    const { data } = await clienteAxios.get('/turnos/mis-turnos');
+    return data.datos || data;
   } catch (error) {
     atraparError(error);
   }
