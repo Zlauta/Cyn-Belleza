@@ -4,55 +4,71 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-
 model Usuarios {
-  id        Int      @id @default(autoincrement())
-  nombre    String
-  email     String   @unique
-  contrasenia  String
-  createdAt DateTime @default(now())
-  rol       Rol      @default(CLIENTE)
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  email       String   @unique
+  contrasenia String
+  telefono    String
+  createdAt   DateTime @default(now())
+  rol         Rol      @default(CLIENTE)
 
-  turnosCliente Turno[] @relation("TurnosCliente")
+  turnos Turno[] @relation("Turnos")
 }
 
 model Servicios {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   nombre      String
-  categoria String
+  descripcion String
+  categoria   String
   precio      Float
-  duracion    Int 
+  duracion    Int
+  activo      Boolean @default(true)
 
   turnos Turno[]
 }
 
 model Turno {
-  id              Int      @id @default(autoincrement())
-  fechaHora       DateTime
-  estado          Estado   @default(PENDIENTE)
+  id        Int      @id @default(autoincrement())
+  fechaHora DateTime
+  estado    Estado   @default(PENDIENTE)
 
-  clienteId       Int
-  cliente         Usuarios @relation("TurnosCliente", fields: [clienteId], references: [id])
+  estadoPago EstadoPago @default(PENDIENTE)
+  transaccionId String?
 
-  servicioId      Int
-  servicio        Servicios @relation(fields: [servicioId], references: [id])
+  recordatorioEnviado Boolean @default(false)
+
+  clienteId Int?
+  cliente   Usuarios? @relation("Turnos", fields: [clienteId], references: [id])
+
+ clienteManual String?
+
+  servicioId Int
+  servicio   Servicios @relation(fields: [servicioId], references: [id])
 }
 
-  enum Estado {
-    PENDIENTE
-    CONFIRMADO
-    CANCELADO
-    COMPLETADO
-  }
-  enum Rol {
-    ADMIN
-    CLIENTE
-  }
+enum Estado {
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+  COMPLETADO
+}
+
+enum Rol {
+  ADMIN
+  CLIENTE
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  REEMBOLSADO
+}
