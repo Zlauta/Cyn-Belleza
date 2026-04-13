@@ -9,7 +9,11 @@ const app = express();
 app.set('trust proxy', 1); // Si el backend va a estar detrás de un proxy (ej: Heroku, Nginx), esto es importante para que el rate limiter funcione correctamente con las IPs reales de los clientes
 app.use(express.json());
 // Middlewares globales
-app.use(cors());
+app.use(cors({
+  // Acá ponés la URL que Vercel le dio a tu Frontend (sin la barra / al final)
+  origin: ['http://localhost:5173', process.env.APP_URL], 
+  credentials: true
+}));
 
 app.use(morgan("dev"));
 

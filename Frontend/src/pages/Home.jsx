@@ -14,17 +14,17 @@ const categorias = [
   {
     id: 1,
     nombre: "Peluquería",
-    imagen: "public/assets/Peluqueria.jpg",
+    imagen: "assets/peluqueria.jpg",
   },
   {
     id: 2,
     nombre: "Manicura y Pedicura",
-    imagen: "public/assets/Manicura.jpeg",
+    imagen: "assets/Manicura.jpeg",
   },
   {
     id: 3,
     nombre: "Estética Facial",
-    imagen: "public/assets/Maquillaje.jpg",
+    imagen: "assets/Maquillaje.jpg",
   },
 ];
 
@@ -78,7 +78,7 @@ const Home = () => {
       <header className="relative bg-gray-900 text-white border-b-[6px] border-pink-600 flex flex-col justify-center min-h-[75vh] lg:min-h-[85vh]">
         <div className="absolute inset-0 opacity-40">
           <img
-            src="public/assets/Hero.png"
+            src="assets/Hero.png"
             alt="Salón de belleza"
             className="w-full h-full object-cover"
           />
@@ -191,7 +191,7 @@ const Home = () => {
             <div className="absolute -inset-4 bg-pink-200 rounded-full opacity-50 blur-3xl animate-pulse"></div>
             <div className="relative w-full h-full bg-gray-100 rounded-full flex items-center justify-center shadow-2xl border-8 border-white overflow-hidden group">
               <img
-                src="public/assets/Salon.jpeg"
+                src="assets/Salon.jpeg"
                 alt="El salón"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
