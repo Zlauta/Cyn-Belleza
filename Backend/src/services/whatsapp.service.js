@@ -66,7 +66,7 @@ export const enviarNotificacionTurno = async (turno) => {
     const nombreServicio = turno.servicio?.nombre || "Tratamiento";
 
     // 1. Notificar a Cynthia
-    const numeroCyn = process.env.NUMERO_CYN_BELLEZA; // 👉 ACORDATE DE PONER EL NÚMERO REAL ACÁ
+    const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
     const msjCyn =
       `📢 *Nuevo Turno Web*\n\n` +
       `👤 Cliente: ${turno.clienteManual || turno.cliente?.nombre}\n` +
@@ -78,17 +78,37 @@ export const enviarNotificacionTurno = async (turno) => {
     await client.sendMessage(numeroCyn, msjCyn);
 
     // Esperamos 2 segundos entre mensaje y mensaje para no ser detectados como SPAM
+    const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     await esperar(2000);
 
     // 2. Notificar a la Clienta
-    let telefonoCliente = "";
 
-    if (turno.clienteManual && turno.clienteManual.includes("Tel: ")) {
+    // 👉 ARREGLO 1: Buscamos primero en el usuario logueado
+    let telefonoCliente = turno.cliente?.telefono;
+
+    // 👉 ARREGLO 2: Si no está ahí, lo buscamos en el texto manual (Invitado)
+    if (
+      !telefonoCliente &&
+      turno.clienteManual &&
+      turno.clienteManual.includes("Tel: ")
+    ) {
       telefonoCliente = turno.clienteManual.split("Tel: ")[1].trim();
     }
 
     if (telefonoCliente) {
-      const numeroLimpio = telefonoCliente.replace(/\D/g, "");
+      // 👉 ARREGLO 3: Filtro "Anti-Errores Argentinos"
+      let numeroLimpio = telefonoCliente.toString().replace(/\D/g, ""); // Solo números
+
+      // Si le puso el 0 del código de área, se lo volamos
+      if (numeroLimpio.startsWith("0"))
+        numeroLimpio = numeroLimpio.substring(1);
+
+      // Si le puso el 15, se lo volamos
+      if (numeroLimpio.includes("15") && numeroLimpio.length > 10) {
+        numeroLimpio = numeroLimpio.replace("15", "");
+      }
+
+      // Armamos el número perfecto para la API
       const jidCliente = `549${numeroLimpio}@c.us`;
 
       const aliasMP = process.env.ALIAS_CYN_BELLEZA;
@@ -99,7 +119,7 @@ export const enviarNotificacionTurno = async (turno) => {
         `📅 Fecha: ${fecha}\n` +
         `⏰ Hora: ${hora}\n\n` +
         `⚠️ *IMPORTANTE PARA CONFIRMAR:*\n` +
-        `Para asegurar tu lugar, necesitamos una seña del *20%*. Por favor, transferí al siguiente alias de Mercado Pago:\n\n` +
+        `Para asegurar tu lugar, necesitamos una seña del *20%* de lo que cuesta el servicio. Por favor, transferí al siguiente alias de Uala:\n\n` +
         `💸 *Alias:* ${aliasMP}\n\n` +
         `📝 *Nuestra Política de Turnos:*\n` +
         `Sabemos que pueden surgir imprevistos. Podés reprogramar o cancelar tu turno sin perder tu seña avisándonos con al menos *24 horas de anticipación*. Las cancelaciones con menos de 24 hs no tienen devolución de seña, para poder respetar el tiempo de nuestras profesionales.\n\n` +
@@ -107,6 +127,11 @@ export const enviarNotificacionTurno = async (turno) => {
         `¡Muchas gracias! Te esperamos.`;
 
       await client.sendMessage(jidCliente, msjCliente);
+      console.log("✅ Mensaje enviado al cliente correctamente.");
+    } else {
+      console.log(
+        "⚠️ No se encontró el teléfono del cliente, no se envió mensaje.",
+      );
     }
   } catch (error) {
     console.error("❌ Error enviando mensaje de WhatsApp:", error.message);
@@ -182,3 +207,36 @@ const enviarRecordatoriosProgramados = async () => {
 cron.schedule("0 9,18 * * *", () => {
   enviarRecordatoriosProgramados();
 });
+
+// 👉 Agregá esto en tu whatsapp.service.js
+
+export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
+  try {
+    const fecha = new Date(turnoCancelado.fechaHora);
+    const fechaStr = fecha.toLocaleDateString("es-AR");
+    const horaStr = fecha.toLocaleTimeString("es-AR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Buscamos el nombre dependiendo de si estaba logueada o era manual
+    const nombreCliente =
+      turnoCancelado.cliente?.nombre ||
+      turnoCancelado.clienteManual ||
+      "Una clienta";
+    const nombreServicio = turnoCancelado.servicio?.nombre || "un servicio";
+
+    const mensaje = `⚠️ *TURNO CANCELADO* ⚠️\n\nHola Cyn, la clienta *${nombreCliente}* acaba de cancelar su turno desde la página web.\n\n✂️ *Servicio:* ${nombreServicio}\n📅 *Día:* ${fechaStr}\n⏰ *Hora:* ${horaStr} hs\n\n💰 _Recordá revisar tu cuenta de Mercado Pago o contactarla para la devolución de la seña._`;
+
+    // El número de tu mamá con el sufijo que usa whatsapp-web.js
+    const numeroCyn = process.env.NUMERO_CYN_BELLEZA; // Asegúrate de tener este número en tu .env
+
+    // Asumiendo que tu cliente de WA se llama 'client' o 'bot' en este archivo
+    await client.sendMessage(numeroCyn, mensaje);
+  } catch (error) {
+    console.error(
+      "No se pudo enviar el aviso de cancelación a Cyn:",
+      error.message,
+    );
+  }
+};

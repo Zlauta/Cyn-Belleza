@@ -7,10 +7,13 @@ import SelectorServicios from "../components/cliente/SelectorServicios.jsx";
 import SelectorFechaHora from "../components/cliente/SelectorFechaHora.jsx";
 import ResumenReserva from "../components/cliente/ResumenReserva.jsx";
 
+// Importación original
 import {
   obtenerServiciosPublicos,
   crearReservaPublica,
-} from "../services/reservas.service.js"; // 👉 Asegurate que esta ruta sea correcta
+} from "../services/reservas.service.js";
+// 👉 IMPORTAMOS TU SERVICIO PRIVADO (El que usa clienteAxios y manda el Token)
+import { crearTurno } from "../services/turno.services.js";
 
 const Reservar = () => {
   const hoy = startOfToday();
@@ -50,7 +53,7 @@ const Reservar = () => {
 
           setCategoriasServicios(arrayCategorias);
 
-          // 👉 FIX: LA PRESELECCIÓN AHORA SÍ FUNCIONA Y NO ROMPE NADA
+          // FIX: LA PRESELECCIÓN AHORA SÍ FUNCIONA Y NO ROMPE NADA
           if (location.state && location.state.preseleccionId) {
             const servicioQueCoincide = serviciosDb.find(
               (s) => s.id === location.state.preseleccionId,
@@ -92,21 +95,38 @@ const Reservar = () => {
     const [horas, minutos] = horarioSeleccionado.split(":");
     fechaHoraUnida.setHours(parseInt(horas), parseInt(minutos), 0);
 
-    const payload = {
-      servicioId: servicioSeleccionado.id,
-      fechaHora: fechaHoraUnida.toISOString(),
-      estado: "PENDIENTE",
-      clienteManual: `${datosCliente.nombre} - Tel: ${datosCliente.telefono}`,
-    };
-
     try {
-      await crearReservaPublica(payload);
+      // 👉 LA MAGIA: Separamos los caminos dependiendo de si está logueado
+      if (datosCliente.clienteId) {
+        // 1. ES UN USUARIO LOGUEADO (Llamamos a tu servicio privado con Token)
+        await crearTurno({
+          servicioId: servicioSeleccionado.id,
+          fechaHora: fechaHoraUnida.toISOString(),
+          estado: "PENDIENTE",
+          // No hace falta enviar clienteManual ni clienteId porque tu backend lo saca del token (req.usuario.id)
+        });
+      } else {
+        // 2. ES UN INVITADO (Llamamos a la ruta pública)
+        await crearReservaPublica({
+          servicioId: servicioSeleccionado.id,
+          fechaHora: fechaHoraUnida.toISOString(),
+          estado: "PENDIENTE",
+          clienteManual: `${datosCliente.nombre} - Tel: ${datosCliente.telefono}`,
+        });
+      }
+
       toast.success("¡Reserva confirmada con éxito!", { id: loadToast });
       setReservaExitosa(true);
+
+      // 👉 Disparamos el evento para que el Navbar actualice "Mis Turnos" instantáneamente
+      window.dispatchEvent(new Event("storage"));
     } catch (error) {
-      toast.error("No se pudo completar la reserva. Intenta de nuevo.", {
-        id: loadToast,
-      });
+      toast.error(
+        error.message || "No se pudo completar la reserva. Intenta de nuevo.",
+        {
+          id: loadToast,
+        },
+      );
       setEnviandoReserva(false);
     }
   };
