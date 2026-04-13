@@ -10,24 +10,17 @@ let botListo = false;
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
-    // 🔥 Estos argumentos evitan que Chrome colapse por falta de memoria
+    // Le pasamos la ruta del Chromium que instalamos en el Dockerfile
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
+    // Estos argumentos son OBLIGATORIOS para que Chrome corra adentro de Docker
     args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--no-zygote",
-      "--disable-gpu",
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
     ],
   },
-  // 🔥 ESTA ES LA MAGIA: Evita que WhatsApp Web se recargue solo y tire el "Detached Frame"
-  webVersionCache: {
-    type: "none",
-    strict: true,
-  },
 });
-
 client.on("qr", (qr) => {
   console.log("📱 ¡ATENCIÓN! ESCANEÁ ESTE QR CON EL WHATSAPP DEL SALÓN:");
   qrcode.generate(qr, { small: true });
