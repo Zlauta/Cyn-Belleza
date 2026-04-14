@@ -11,7 +11,7 @@ app.use(express.json());
 // Middlewares globales
 app.use(cors({
   // Acá ponés la URL que Vercel le dio a tu Frontend (sin la barra / al final)
-  origin: ['http://localhost:5173', process.env.APP_URL], 
+  origin: [process.env.APP_URL], 
   credentials: true
 }));
 
