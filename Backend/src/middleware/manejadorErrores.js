@@ -7,6 +7,6 @@ export const manejadorErrores = (err, req, res, next) => {
   res.status(codigoEstado).json({
     exito: false,
     error: mensaje,
-    pila: process.env.NODE_ENV === 'development' ? err.stack : null,
+    pila: process.env.NODE_ENV === 'production' ? err.stack : null,
   });
 };
