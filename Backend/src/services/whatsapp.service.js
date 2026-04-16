@@ -1,8 +1,8 @@
 import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
-import qrcode from "qrcode-terminal";
 import cron from "node-cron";
 import { prisma } from "../db.js"; // 👉 AGREGÁ ESTA LÍNEA
+import qrcode from "qrcode";
 
 // Bandera para saber si el bot está 100% operativo
 let botListo = false;
@@ -14,21 +14,25 @@ const client = new Client({
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
     // Estos argumentos son OBLIGATORIOS para que Chrome corra adentro de Docker
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu'
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
     ],
   },
+  authTimeoutMs: 180000, // 3 minutos para escanear el QR
 });
+
+export let qrActualTexto = null;
+
 client.on("qr", (qr) => {
-  console.log("📱 ¡ATENCIÓN! ESCANEÁ ESTE QR CON EL WHATSAPP DEL SALÓN:");
-  qrcode.generate(qr, { small: true });
+  console.log("⚠️ Nuevo código QR generado. Entrá a la ruta para escanearlo.");
+  qrActualTexto = qr; // Guardamos el texto del QR
 });
 
 client.on("ready", () => {
-  botListo = true;
-  console.log("✅ ¡Bot de WhatsApp de CYN Belleza está conectado y listo!");
+  console.log("✅ Bot de WhatsApp listo!");
+  qrActualTexto = null; // Lo borramos cuando ya se conectó
 });
 
 client.on("disconnected", (reason) => {
@@ -36,7 +40,12 @@ client.on("disconnected", (reason) => {
   console.log("❌ El bot de WhatsApp se desconectó. Razón:", reason);
 });
 
-client.initialize();
+client.initialize().catch((error) => {
+  console.error("❌ Error crítico inicializando WhatsApp:", error.message);
+  console.log(
+    "⚠️ El servidor seguirá funcionando, pero el bot de WhatsApp está apagado.",
+  );
+});
 
 // Función de espera para no saturar a WhatsApp si entran muchos turnos de golpe
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
