@@ -1,44 +1,47 @@
 import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 import cron from "node-cron";
-import { prisma } from "../db.js"; // 👉 AGREGÁ ESTA LÍNEA
+import { prisma } from "../db.js";
 import qrcode from "qrcode";
 
 // Bandera para saber si el bot está 100% operativo
-let botListo = false;
+export let botListo = false; // 👉 La exportamos por si alguna vez querés ver el estado desde otro lado
+export let qrActualTexto = null;
 
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
-    headless: true, // Nos aseguramos de que corra invisible
+    headless: true,
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      // 👉 NUEVA DIETA ESTRICTA PARA LA MEMORIA DE RENDER
-      '--no-zygote',
-      '--single-process',
-      '--disable-accelerated-2d-canvas',
-      '--disable-software-rasterizer',
-      '--mute-audio', // No necesitamos que cargue el motor de sonido de WA
-      '--disable-extensions'
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--no-zygote",
+      "--single-process",
+      "--disable-accelerated-2d-canvas",
+      "--disable-software-rasterizer",
+      "--mute-audio",
+      "--disable-extensions",
+      // 👉 DIETA EXTREMA (Nuevos ahorros de memoria)
+      "--disable-features=site-per-process", // Ahorra RAM aislando procesos de iframes
+      "--blink-settings=imagesEnabled=false", // IMPIDE descargar fotos de perfil o estados de WA (Ahorro gigante)
+      "--disable-dev-tools", // Apaga las herramientas de desarrollador internas de Chrome
     ],
   },
-  authTimeoutMs: 180000, 
+  authTimeoutMs: 180000,
 });
-
-export let qrActualTexto = null;
 
 client.on("qr", (qr) => {
   console.log("⚠️ Nuevo código QR generado. Entrá a la ruta para escanearlo.");
-  qrActualTexto = qr; // Guardamos el texto del QR
+  qrActualTexto = qr;
 });
 
 client.on("ready", () => {
-  console.log("✅ Bot de WhatsApp listo!");
-  qrActualTexto = null; // Lo borramos cuando ya se conectó
+  console.log("✅ Bot de WhatsApp listo y en línea!");
+  qrActualTexto = null;
+  botListo = true; // 👉 ¡CORRECCIÓN CRÍTICA! Si no poníamos esto, nunca iba a mandar mensajes
 });
 
 client.on("disconnected", (reason) => {
@@ -46,18 +49,17 @@ client.on("disconnected", (reason) => {
   console.log("❌ El bot de WhatsApp se desconectó. Razón:", reason);
 });
 
-// client.initialize().catch((error) => {
-//   console.error("❌ Error crítico inicializando WhatsApp:", error.message);
-//   console.log(
-//     "⚠️ El servidor seguirá funcionando, pero el bot de WhatsApp está apagado.",
-//   );
-// });
+client.initialize().catch((error) => {
+  console.error("❌ Error crítico inicializando WhatsApp:", error.message);
+  console.log(
+    "⚠️ El servidor seguirá funcionando, pero el bot de WhatsApp está apagado.",
+  );
+});
 
 // Función de espera para no saturar a WhatsApp si entran muchos turnos de golpe
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const enviarNotificacionTurno = async (turno) => {
-  // Si el bot no está listo, cancelamos el envío para que no crashee el servidor
   if (!botListo) {
     console.log(
       "⚠️ Intento de envío cancelado: El bot de WhatsApp no está listo.",
@@ -85,16 +87,11 @@ export const enviarNotificacionTurno = async (turno) => {
 
     await client.sendMessage(numeroCyn, msjCyn);
 
-    // Esperamos 2 segundos entre mensaje y mensaje para no ser detectados como SPAM
-    const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    await esperar(2000);
+    await esperar(2000); // Pausa anti-spam
 
     // 2. Notificar a la Clienta
-
-    // 👉 ARREGLO 1: Buscamos primero en el usuario logueado
     let telefonoCliente = turno.cliente?.telefono;
 
-    // 👉 ARREGLO 2: Si no está ahí, lo buscamos en el texto manual (Invitado)
     if (
       !telefonoCliente &&
       turno.clienteManual &&
@@ -104,21 +101,15 @@ export const enviarNotificacionTurno = async (turno) => {
     }
 
     if (telefonoCliente) {
-      // 👉 ARREGLO 3: Filtro "Anti-Errores Argentinos"
-      let numeroLimpio = telefonoCliente.toString().replace(/\D/g, ""); // Solo números
+      let numeroLimpio = telefonoCliente.toString().replace(/\D/g, "");
 
-      // Si le puso el 0 del código de área, se lo volamos
       if (numeroLimpio.startsWith("0"))
         numeroLimpio = numeroLimpio.substring(1);
-
-      // Si le puso el 15, se lo volamos
       if (numeroLimpio.includes("15") && numeroLimpio.length > 10) {
         numeroLimpio = numeroLimpio.replace("15", "");
       }
 
-      // Armamos el número perfecto para la API
       const jidCliente = `549${numeroLimpio}@c.us`;
-
       const aliasMP = process.env.ALIAS_CYN_BELLEZA;
 
       const msjCliente =
@@ -127,7 +118,7 @@ export const enviarNotificacionTurno = async (turno) => {
         `📅 Fecha: ${fecha}\n` +
         `⏰ Hora: ${hora}\n\n` +
         `⚠️ *IMPORTANTE PARA CONFIRMAR:*\n` +
-        `Para asegurar tu lugar, necesitamos una seña del *20%* de lo que cuesta el servicio. Por favor, transferí al siguiente alias de Uala:\n\n` +
+        `Para asegurar tu lugar, necesitamos una seña del *20%* de lo que cuesta el servicio. Por favor, transferí al siguiente alias de Mercado Pago / Ualá:\n\n` +
         `💸 *Alias:* ${aliasMP}\n\n` +
         `📝 *Nuestra Política de Turnos:*\n` +
         `Sabemos que pueden surgir imprevistos. Podés reprogramar o cancelar tu turno sin perder tu seña avisándonos con al menos *24 horas de anticipación*. Las cancelaciones con menos de 24 hs no tienen devolución de seña, para poder respetar el tiempo de nuestras profesionales.\n\n` +
@@ -158,7 +149,6 @@ const enviarRecordatoriosProgramados = async () => {
     const inicioMañana = new Date(mañana.setHours(0, 0, 0, 0));
     const finMañana = new Date(mañana.setHours(23, 59, 59, 999));
 
-    // Buscamos turnos de mañana que no hayan sido notificados y no estén cancelados
     const turnosDeMañana = await prisma.turno.findMany({
       where: {
         fechaHora: {
@@ -193,13 +183,12 @@ const enviarRecordatoriosProgramados = async () => {
 
         await client.sendMessage(jidCliente, msjRecordatorio);
 
-        // Marcamos como enviado para no repetir
         await prisma.turno.update({
           where: { id: turno.id },
           data: { recordatorioEnviado: true },
         });
 
-        await esperar(3000); // Pausa de 3 segundos para seguridad
+        await esperar(3000);
       }
     }
     if (turnosDeMañana.length > 0)
@@ -209,16 +198,13 @@ const enviarRecordatoriosProgramados = async () => {
   }
 };
 
-// PROGRAMACIÓN (CRON):
-// Se ejecuta todos los días a las 09:00 AM y a las 18:00 PM
-// Formato: (minuto hora día mes día-semana)
 cron.schedule("0 9,18 * * *", () => {
   enviarRecordatoriosProgramados();
 });
 
-// 👉 Agregá esto en tu whatsapp.service.js
-
 export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
+  if (!botListo) return; // 👉 Agregamos el chequeo acá también por las dudas
+
   try {
     const fecha = new Date(turnoCancelado.fechaHora);
     const fechaStr = fecha.toLocaleDateString("es-AR");
@@ -227,19 +213,16 @@ export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
       minute: "2-digit",
     });
 
-    // Buscamos el nombre dependiendo de si estaba logueada o era manual
     const nombreCliente =
       turnoCancelado.cliente?.nombre ||
       turnoCancelado.clienteManual ||
       "Una clienta";
     const nombreServicio = turnoCancelado.servicio?.nombre || "un servicio";
 
-    const mensaje = `⚠️ *TURNO CANCELADO* ⚠️\n\nHola Cyn, la clienta *${nombreCliente}* acaba de cancelar su turno desde la página web.\n\n✂️ *Servicio:* ${nombreServicio}\n📅 *Día:* ${fechaStr}\n⏰ *Hora:* ${horaStr} hs\n\n💰 _Recordá revisar tu cuenta de Mercado Pago o contactarla para la devolución de la seña._`;
+    const mensaje = `⚠️ *TURNO CANCELADO* ⚠️\n\nHola Cyn, la clienta *${nombreCliente}* acaba de cancelar su turno desde la página web.\n\n✂️ *Servicio:* ${nombreServicio}\n📅 *Día:* ${fechaStr}\n⏰ *Hora:* ${horaStr} hs\n\n💰 _Recordá revisar tu cuenta de Uala o contactarla para la devolución de la seña._`;
 
-    // El número de tu mamá con el sufijo que usa whatsapp-web.js
-    const numeroCyn = process.env.NUMERO_CYN_BELLEZA; // Asegúrate de tener este número en tu .env
+    const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
 
-    // Asumiendo que tu cliente de WA se llama 'client' o 'bot' en este archivo
     await client.sendMessage(numeroCyn, mensaje);
   } catch (error) {
     console.error(

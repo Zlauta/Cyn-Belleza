@@ -11,7 +11,10 @@ const app = express();
 app.set("trust proxy", 1); // Si el backend va a estar detrás de un proxy (ej: Heroku, Nginx), esto es importante para que el rate limiter funcione correctamente con las IPs reales de los clientes
 app.use(express.json());
 // Middlewares globales
-app.use(cors());
+app.use(cors({
+  origin: process.env.APP_URL,
+  credentials: true
+}));
 
 app.use(morgan("dev"));
 
