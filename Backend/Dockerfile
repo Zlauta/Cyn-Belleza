@@ -1,39 +1,29 @@
 # 1. Usar la versión ligera de Node.js
 FROM node:22-alpine
 
-# 👉 2. INSTALAR CHROMIUM Y DEPENDENCIAS PARA EL BOT DE WHATSAPP
-# Esto le da al contenedor las herramientas para abrir el navegador invisible
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
-
-# 👉 3. Variables de entorno para Puppeteer
-# Le decimos que NO descargue su propio Chrome pesado, sino que use el de Alpine
+# 👉 2. EL TRUCO PARA AHORRAR TIEMPO Y ESPACIO
+# Le decimos a npm que cuando instale 'puppeteer', NO intente descargar 
+# el Chrome de 150MB que trae por defecto, porque total usamos Browserless.
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# 4. Crear la carpeta donde vivirá tu app
+# 3. Crear la carpeta donde vivirá tu app
 WORKDIR /app
 
-# 5. Copiar dependencias (para optimizar caché)
+# 4. Copiar los archivos de dependencias (para optimizar caché)
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# 6. Instalar las dependencias
+# 5. Instalar las dependencias de Node
 RUN npm install
 
-# 7. Generar el cliente de Prisma
+# 6. Generar el cliente de Prisma para la base de datos
 RUN npx prisma generate
 
-# 8. Copiar el resto de tu código fuente
+# 7. Copiar el resto de tu código fuente
 COPY . .
 
-# 9. Exponer el puerto
+# 8. Exponer el puerto
 EXPOSE 5000
 
-# 10. Encender la API
+# 9. Encender la API
 CMD ["npm", "start"]

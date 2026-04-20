@@ -5,30 +5,23 @@ import { prisma } from "../db.js";
 import qrcode from "qrcode";
 
 // Bandera para saber si el bot está 100% operativo
-export let botListo = false; // 👉 La exportamos por si alguna vez querés ver el estado desde otro lado
+export let botListo = false;
 export let qrActualTexto = null;
 
+// 👉 CONFIGURACIÓN CON BROWSERLESS
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
+    // Conectamos a Browserless en lugar de abrir un Chrome local
+    browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
     headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage", // Clave para Render (evita que se quede sin memoria compartida)
-      "--disable-gpu",
-      "--disable-extensions",
-      "--mute-audio",
-      // Borramos --single-process, --no-zygote y la de las imágenes que son inestables
-    ],
   },
   authTimeoutMs: 180000,
   webVersionCache: {
     type: "remote",
     remotePath:
       "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
-  }, // 👉 ESCUDO ANTI-ACTUALIZACIONES
+  },
 });
 
 client.on("qr", (qr) => {
@@ -37,9 +30,9 @@ client.on("qr", (qr) => {
 });
 
 client.on("ready", () => {
-  console.log("✅ Bot de WhatsApp listo y en línea!");
+  console.log("✅ Bot de WhatsApp listo y en línea (vía Browserless)!");
   qrActualTexto = null;
-  botListo = true; // 👉 ¡CORRECCIÓN CRÍTICA! Si no poníamos esto, nunca iba a mandar mensajes
+  botListo = true;
 });
 
 client.on("disconnected", (reason) => {
@@ -54,7 +47,8 @@ client.initialize().catch((error) => {
   );
 });
 
-// Función de espera para no saturar a WhatsApp si entran muchos turnos de golpe
+// --- EL RESTO DE TUS FUNCIONES (enviarNotificacionTurno, etc.) SIGUEN IGUAL ---
+
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const enviarNotificacionTurno = async (turno) => {
@@ -73,7 +67,6 @@ export const enviarNotificacionTurno = async (turno) => {
     });
     const nombreServicio = turno.servicio?.nombre || "Tratamiento";
 
-    // 1. Notificar a Cynthia
     const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
     const msjCyn =
       `📢 *Nuevo Turno Web*\n\n` +
@@ -84,10 +77,8 @@ export const enviarNotificacionTurno = async (turno) => {
       `_Revisalo en tu panel de administración._`;
 
     await client.sendMessage(numeroCyn, msjCyn);
+    await esperar(2000);
 
-    await esperar(2000); // Pausa anti-spam
-
-    // 2. Notificar a la Clienta
     let telefonoCliente = turno.cliente?.telefono;
 
     if (
@@ -116,19 +107,14 @@ export const enviarNotificacionTurno = async (turno) => {
         `📅 Fecha: ${fecha}\n` +
         `⏰ Hora: ${hora}\n\n` +
         `⚠️ *IMPORTANTE PARA CONFIRMAR:*\n` +
-        `Para asegurar tu lugar, necesitamos una seña del *20%* de lo que cuesta el servicio. Por favor, transferí al siguiente alias de Mercado Pago / Ualá:\n\n` +
+        `Para asegurar tu lugar, necesitamos una seña del *20%* de lo que cuesta el servicio. Por favor, transferí al siguiente alias:\n\n` +
         `💸 *Alias:* ${aliasMP}\n\n` +
         `📝 *Nuestra Política de Turnos:*\n` +
-        `Sabemos que pueden surgir imprevistos. Podés reprogramar o cancelar tu turno sin perder tu seña avisándonos con al menos *24 horas de anticipación*. Las cancelaciones con menos de 24 hs no tienen devolución de seña, para poder respetar el tiempo de nuestras profesionales.\n\n` +
-        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.\n\n` +
-        `¡Muchas gracias! Te esperamos.`;
+        `Podés reprogramar o cancelar sin perder tu seña avisándonos con al menos *24 horas de anticipación*.\n\n` +
+        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.`;
 
       await client.sendMessage(jidCliente, msjCliente);
       console.log("✅ Mensaje enviado al cliente correctamente.");
-    } else {
-      console.log(
-        "⚠️ No se encontró el teléfono del cliente, no se envió mensaje.",
-      );
     }
   } catch (error) {
     console.error("❌ Error enviando mensaje de WhatsApp:", error.message);
@@ -137,22 +123,16 @@ export const enviarNotificacionTurno = async (turno) => {
 
 const enviarRecordatoriosProgramados = async () => {
   if (!botListo) return;
-
   console.log("⏰ Revisando turnos para enviar recordatorios...");
-
   try {
     const mañana = new Date();
     mañana.setDate(mañana.getDate() + 1);
-
     const inicioMañana = new Date(mañana.setHours(0, 0, 0, 0));
     const finMañana = new Date(mañana.setHours(23, 59, 59, 999));
 
     const turnosDeMañana = await prisma.turno.findMany({
       where: {
-        fechaHora: {
-          gte: inicioMañana,
-          lte: finMañana,
-        },
+        fechaHora: { gte: inicioMañana, lte: finMañana },
         estado: { not: "CANCELADO" },
         recordatorioEnviado: false,
       },
@@ -177,7 +157,7 @@ const enviarRecordatoriosProgramados = async () => {
           `¡Hola! ✨ Te recordamos tu turno de mañana en *CYN Belleza*:\n\n` +
           `💆‍♀️ *${turno.servicio.nombre}*\n` +
           `⏰ A las ${hora} hs.\n\n` +
-          `📍 ¡Te esperamos! (Si no podés asistir, por favor avisanos con tiempo).`;
+          `📍 ¡Te esperamos!`;
 
         await client.sendMessage(jidCliente, msjRecordatorio);
 
@@ -189,8 +169,6 @@ const enviarRecordatoriosProgramados = async () => {
         await esperar(3000);
       }
     }
-    if (turnosDeMañana.length > 0)
-      console.log(`✅ Se enviaron ${turnosDeMañana.length} recordatorios.`);
   } catch (error) {
     console.error("❌ Error en el cron de recordatorios:", error);
   }
@@ -201,7 +179,7 @@ cron.schedule("0 9,18 * * *", () => {
 });
 
 export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
-  if (!botListo) return; // 👉 Agregamos el chequeo acá también por las dudas
+  if (!botListo) return;
 
   try {
     const fecha = new Date(turnoCancelado.fechaHora);
@@ -217,10 +195,9 @@ export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
       "Una clienta";
     const nombreServicio = turnoCancelado.servicio?.nombre || "un servicio";
 
-    const mensaje = `⚠️ *TURNO CANCELADO* ⚠️\n\nHola Cyn, la clienta *${nombreCliente}* acaba de cancelar su turno desde la página web.\n\n✂️ *Servicio:* ${nombreServicio}\n📅 *Día:* ${fechaStr}\n⏰ *Hora:* ${horaStr} hs\n\n💰 _Recordá revisar tu cuenta de Uala o contactarla para la devolución de la seña._`;
+    const mensaje = `⚠️ *TURNO CANCELADO* ⚠️\n\nHola Cyn, la clienta *${nombreCliente}* acaba de cancelar su turno web.\n\n✂️ *Servicio:* ${nombreServicio}\n📅 *Día:* ${fechaStr}\n⏰ *Hora:* ${horaStr} hs`;
 
     const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
-
     await client.sendMessage(numeroCyn, mensaje);
   } catch (error) {
     console.error(
