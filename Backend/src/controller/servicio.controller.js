@@ -43,6 +43,7 @@ export const actualizar = async (req, res, next) => {
       req.params.id,
       req.body,
     );
+    console.log("✨ RESULTADO REAL DE LA DB:", servicioActualizado);
     res
       .status(200)
       .json({ message: "Servicio actualizado", servicio: servicioActualizado });
