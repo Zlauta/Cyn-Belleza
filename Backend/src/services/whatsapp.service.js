@@ -10,17 +10,23 @@ let botListo = false;
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
-    // Le pasamos la ruta del Chromium que instalamos en el Dockerfile
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
-    // Estos argumentos son OBLIGATORIOS para que Chrome corra adentro de Docker
+    headless: true, // Nos aseguramos de que corra invisible
     args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      // 👉 NUEVA DIETA ESTRICTA PARA LA MEMORIA DE RENDER
+      '--no-zygote',
+      '--single-process',
+      '--disable-accelerated-2d-canvas',
+      '--disable-software-rasterizer',
+      '--mute-audio', // No necesitamos que cargue el motor de sonido de WA
+      '--disable-extensions'
     ],
   },
-  authTimeoutMs: 180000, // 3 minutos para escanear el QR
+  authTimeoutMs: 180000, 
 });
 
 export let qrActualTexto = null;
