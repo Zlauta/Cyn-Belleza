@@ -34,6 +34,11 @@ export const obtenerPorId = async (req, res, next) => {
 
 export const actualizar = async (req, res, next) => {
   try {
+    // 🕵️‍♂️ LOS DETECTIVES: Imprimimos en la consola de Render lo que llega
+    console.log(`\n📩 === INTENTANDO EDITAR SERVICIO ID: ${req.params.id} ===`);
+    console.log("📦 BODY RECIBIDO EN EXPRESS:", req.body);
+    console.log("===================================================\n");
+
     const servicioActualizado = await servicioService.actualizarServicio(
       req.params.id,
       req.body,
@@ -42,6 +47,7 @@ export const actualizar = async (req, res, next) => {
       .status(200)
       .json({ message: "Servicio actualizado", servicio: servicioActualizado });
   } catch (error) {
+    console.error("❌ ERROR EN EL CONTROLADOR AL ACTUALIZAR:", error);
     next(error);
   }
 };
