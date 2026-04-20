@@ -1,29 +1,30 @@
-# 1. Usar la versión ligera de Node.js
 FROM node:22-alpine
 
-# 👉 2. EL TRUCO PARA AHORRAR TIEMPO Y ESPACIO
-# Le decimos a npm que cuando instale 'puppeteer', NO intente descargar 
-# el Chrome de 150MB que trae por defecto, porque total usamos Browserless.
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Instalamos el Chromium liviano de Alpine y sus dependencias gráficas
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
-# 3. Crear la carpeta donde vivirá tu app
+# Obligamos a Puppeteer a usar este navegador enano y no descargar el pesado
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
 
-# 4. Copiar los archivos de dependencias (para optimizar caché)
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# 5. Instalar las dependencias de Node
 RUN npm install
-
-# 6. Generar el cliente de Prisma para la base de datos
 RUN npx prisma generate
 
-# 7. Copiar el resto de tu código fuente
 COPY . .
 
-# 8. Exponer el puerto
 EXPOSE 5000
 
-# 9. Encender la API
-CMD ["npm", "start"]
+# 👉 EL TRUCO FINAL: Le ponemos un candado a Node para que no use más de 250MB de RAM
+# y le deje la otra mitad de los 512MB al navegador.
+CMD ["node", "--max-old-space-size=250", "src/server.js"]

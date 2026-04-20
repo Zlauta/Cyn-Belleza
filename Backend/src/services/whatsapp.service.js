@@ -12,11 +12,21 @@ export let qrActualTexto = null;
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
-    // Conectamos a Browserless en lugar de abrir un Chrome local
-    browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
+    // Apuntamos al navegador enano que instalamos en Docker
+    executablePath: '/usr/bin/chromium-browser', 
     headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage", // Salva la memoria en Render
+      "--disable-gpu",
+      "--disable-extensions"
+    ],
   },
   authTimeoutMs: 180000,
+  webVersionCache: {
+    type: "local"
+  }
 });
 
 client.on("qr", (qr) => {
