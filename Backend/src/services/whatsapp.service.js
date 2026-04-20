@@ -46,12 +46,12 @@ client.on("disconnected", (reason) => {
   console.log("❌ El bot de WhatsApp se desconectó. Razón:", reason);
 });
 
-client.initialize().catch((error) => {
-  console.error("❌ Error crítico inicializando WhatsApp:", error.message);
-  console.log(
-    "⚠️ El servidor seguirá funcionando, pero el bot de WhatsApp está apagado.",
-  );
-});
+// client.initialize().catch((error) => {
+//   console.error("❌ Error crítico inicializando WhatsApp:", error.message);
+//   console.log(
+//     "⚠️ El servidor seguirá funcionando, pero el bot de WhatsApp está apagado.",
+//   );
+// });
 
 // Función de espera para no saturar a WhatsApp si entran muchos turnos de golpe
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
