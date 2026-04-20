@@ -73,6 +73,7 @@ const AdminServicios = () => {
       activo: data.estado === "Activo",
     };
     delete datosProcesados.estado;
+    delete datosProcesados.id;
     const loadToast = toast.loading(
       servicioAEditar ? "Actualizando..." : "Creando...",
     );
