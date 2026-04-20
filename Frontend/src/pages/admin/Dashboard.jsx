@@ -78,7 +78,7 @@ const Dashboard = () => {
 
           {/* 👉 CAMBIO 2: Envolvemos la tabla en un div con overflow-x-auto */}
           {/* Esto crea una barra de scroll horizontal invisible solo para la tabla en celulares */}
-          <div className="w-full overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="w-full overflow-x-auto pb-4 -mx-0 px-0 sm:mx-0 sm:px-0">
             <TablaTurnosRecientes
               turnos={turnos}
               setTurnos={setTurnos}

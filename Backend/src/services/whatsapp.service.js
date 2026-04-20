@@ -16,21 +16,19 @@ const client = new Client({
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
+      "--disable-dev-shm-usage", // Clave para Render (evita que se quede sin memoria compartida)
       "--disable-gpu",
-      "--no-zygote",
-      "--single-process",
-      "--disable-accelerated-2d-canvas",
-      "--disable-software-rasterizer",
-      "--mute-audio",
       "--disable-extensions",
-      // 👉 DIETA EXTREMA (Nuevos ahorros de memoria)
-      "--disable-features=site-per-process", // Ahorra RAM aislando procesos de iframes
-      "--blink-settings=imagesEnabled=false", // IMPIDE descargar fotos de perfil o estados de WA (Ahorro gigante)
-      "--disable-dev-tools", // Apaga las herramientas de desarrollador internas de Chrome
+      "--mute-audio",
+      // Borramos --single-process, --no-zygote y la de las imágenes que son inestables
     ],
   },
   authTimeoutMs: 180000,
+  webVersionCache: {
+    type: "remote",
+    remotePath:
+      "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
+  }, // 👉 ESCUDO ANTI-ACTUALIZACIONES
 });
 
 client.on("qr", (qr) => {
