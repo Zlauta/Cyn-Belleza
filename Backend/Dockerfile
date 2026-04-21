@@ -13,17 +13,16 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 WORKDIR /app
 
-# 1. Copiamos solo los package para instalar dependencias
-COPY package*.json ./
-RUN npm install
-
-# 2. Copiamos TODO tu código de una (incluida la carpeta prisma esté donde esté)
+# 1. Metemos TODO tu código adentro del contenedor PRIMERO
 COPY . .
 
-# 3. Ahora que ya tiene todo el código, generamos Prisma
+# 2. Ahora sí, instalamos. Si Prisma arranca automáticamente, ya encuentra su carpeta.
+RUN npm install
+
+# 3. Lo forzamos a generar la conexión a la base de datos
 RUN npx prisma generate
 
 EXPOSE 5000
 
-# 4. Arrancamos
+# 4. A la cancha
 CMD ["npm", "start"]
