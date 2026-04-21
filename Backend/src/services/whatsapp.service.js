@@ -6,19 +6,22 @@ import cron from "node-cron";
 export let botListo = false;
 export let qrActualTexto = null;
 
-// 👉 CONFIGURACIÓN CON BROWSERLESS Y GUARDADO LOCAL
+// 👉 TODO LOCAL, TODO LIVIANO
 const client = new Client({
-  authStrategy: new LocalAuth(),
+  authStrategy: new LocalAuth(), // Guardamos la sesión en Render
   puppeteer: {
-    browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
+    executablePath: "/usr/bin/chromium-browser", // Usamos el navegador de Alpine
     headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage", // Clave para que la RAM de Render no explote
+      "--disable-gpu",
+      "--disable-extensions",
+      "--single-process", // Obligamos a Chrome a usar un solo hilo para ahorrar memoria
+    ],
   },
   authTimeoutMs: 180000,
-  webVersionCache: {
-    type: "remote",
-    remotePath:
-      "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
-  },
 });
 
 client.on("qr", (qr) => {
