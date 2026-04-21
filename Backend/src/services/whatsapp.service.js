@@ -14,6 +14,11 @@ const client = new Client({
     headless: true,
   },
   authTimeoutMs: 180000,
+  webVersionCache: {
+    type: "remote",
+    remotePath:
+      "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
+  },
 });
 
 client.on("qr", (qr) => {
@@ -93,8 +98,7 @@ export const enviarNotificacionTurno = async (turno) => {
         `💸 *Alias:* ${aliasMP}\n\n` +
         `📝 *Nuestra Política de Turnos:*\n` +
         `Podés reprogramar o cancelar sin perder tu seña avisándonos con al menos *24 horas de anticipación*.\n\n` +
-        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.`
-        `Desde ya muchas gracias por elegirnos, ¡te esperamos para que disfrutes de tu experiencia de belleza! 🌸`;  ;
+        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.``Desde ya muchas gracias por elegirnos, ¡te esperamos para que disfrutes de tu experiencia de belleza! 🌸`;
 
       await client.sendMessage(jidCliente, msjCliente);
     }
