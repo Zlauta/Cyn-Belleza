@@ -1,56 +1,91 @@
 import pkg from "whatsapp-web.js";
-const { Client, LocalAuth } = pkg;
+const { Client, RemoteAuth } = pkg;
+import { prisma } from "../db.js";
 import cron from "node-cron";
-import { prisma } from "../db.js"; // 👉 AGREGÁ ESTA LÍNEA
-import qrcode from "qrcode";
+import fs from "fs";
+import path from "path";
 
-// Bandera para saber si el bot está 100% operativo
-let botListo = false;
+// --- 🛠️ ADAPTADOR DE PRISMA PERSONALIZADO ---
+class PrismaStore {
+    async sessionExists(options) {
+        const session = await prisma.whatsappSession.findUnique({
+            where: { id: options.session }
+        });
+        return !!session;
+    }
 
-const client = new Client({
-  authStrategy: new LocalAuth(),
-  puppeteer: {
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
-    headless: true, // Nos aseguramos de que corra invisible
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      // 👉 NUEVA DIETA ESTRICTA PARA LA MEMORIA DE RENDER
-      '--no-zygote',
-      '--single-process',
-      '--disable-accelerated-2d-canvas',
-      '--disable-software-rasterizer',
-      '--mute-audio', // No necesitamos que cargue el motor de sonido de WA
-      '--disable-extensions'
-    ],
-  },
-  authTimeoutMs: 180000, 
-});
+    async save(options) {
+        // RemoteAuth crea un zip en .wwebjs_auth/session-clientId.zip
+        const filePath = path.join(process.cwd(), `.wwebjs_auth/session-${options.session}.zip`);
+        const sessionData = fs.readFileSync(filePath);
+        
+        await prisma.whatsappSession.upsert({
+            where: { id: options.session },
+            update: { data: sessionData },
+            create: { id: options.session, data: sessionData }
+        });
+    }
 
+    async extract(options) {
+        const session = await prisma.whatsappSession.findUnique({
+            where: { id: options.session }
+        });
+        if (!session) return;
+
+        const authDir = path.join(process.cwd(), '.wwebjs_auth');
+        if (!fs.existsSync(authDir)) fs.mkdirSync(authDir);
+
+        const filePath = path.join(authDir, `session-${options.session}.zip`);
+        fs.writeFileSync(filePath, session.data);
+    }
+
+    async delete(options) {
+        await prisma.whatsappSession.delete({
+            where: { id: options.session }
+        }).catch(() => {}); // Ignorar si no existe
+    }
+}
+
+// --- 🚀 CONFIGURACIÓN DEL CLIENTE ---
+export let botListo = false;
 export let qrActualTexto = null;
 
+const client = new Client({
+    authStrategy: new RemoteAuth({
+        clientId: "cyn-belleza-prod",
+        store: new PrismaStore(),
+        backupSyncIntervalMs: 300000 // Sincroniza con la DB cada 5 minutos
+    }),
+    puppeteer: {
+        browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
+        headless: true,
+    },
+    authTimeoutMs: 180000,
+});
+
+// Evento especial: se dispara cuando la sesión ya viajó a la DB de Neon
+client.on("remote_session_saved", () => {
+    console.log("✨ ¡Sesión persistida en PostgreSQL exitosamente!");
+});
+
 client.on("qr", (qr) => {
-  console.log("⚠️ Nuevo código QR generado. Entrá a la ruta para escanearlo.");
-  qrActualTexto = qr; // Guardamos el texto del QR
+    console.log("⚠️ Nuevo QR generado. Escanealo para guardarlo en la DB.");
+    qrActualTexto = qr;
 });
 
 client.on("ready", () => {
-  console.log("✅ Bot de WhatsApp listo!");
-  qrActualTexto = null; // Lo borramos cuando ya se conectó
+    console.log("✅ Bot de WhatsApp listo y persistente en la nube.");
+    qrActualTexto = null;
+    botListo = true;
 });
 
 client.on("disconnected", (reason) => {
-  botListo = false;
-  console.log("❌ El bot de WhatsApp se desconectó. Razón:", reason);
+    botListo = false;
+    console.log("❌ Bot desconectado:", reason);
 });
 
 client.initialize().catch((error) => {
-  console.error("❌ Error crítico inicializando WhatsApp:", error.message);
-  console.log(
-    "⚠️ El servidor seguirá funcionando, pero el bot de WhatsApp está apagado.",
-  );
+    console.error("❌ Error inicializando:", error.message);
 });
 
 // Función de espera para no saturar a WhatsApp si entran muchos turnos de golpe
