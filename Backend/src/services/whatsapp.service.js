@@ -57,8 +57,16 @@ const client = new Client({
         backupSyncIntervalMs: 300000 // Sincroniza con la DB cada 5 minutos
     }),
     puppeteer: {
-        browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
+        // 👇 Chau Browserless, usamos el navegador enano de Alpine
+        executablePath: '/usr/bin/chromium-browser',
         headless: true,
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage", // Salva la memoria en Render
+            "--disable-gpu",
+            "--disable-extensions"
+        ],
     },
     authTimeoutMs: 180000,
 });
