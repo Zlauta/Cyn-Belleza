@@ -1,112 +1,46 @@
 import pkg from "whatsapp-web.js";
-const { Client, RemoteAuth } = pkg;
+const { Client, LocalAuth } = pkg;
 import { prisma } from "../db.js";
 import cron from "node-cron";
-import fs from "fs";
-import path from "path";
 
-// --- 🛠️ ADAPTADOR DE PRISMA PERSONALIZADO ---
-class PrismaStore {
-    async sessionExists(options) {
-        const session = await prisma.whatsappSession.findUnique({
-            where: { id: options.session }
-        });
-        return !!session;
-    }
-
-    async save(options) {
-        // RemoteAuth crea un zip en .wwebjs_auth/session-clientId.zip
-        const filePath = path.join(process.cwd(), `.wwebjs_auth/session-${options.session}.zip`);
-        const sessionData = fs.readFileSync(filePath);
-        
-        await prisma.whatsappSession.upsert({
-            where: { id: options.session },
-            update: { data: sessionData },
-            create: { id: options.session, data: sessionData }
-        });
-    }
-
-    async extract(options) {
-        const session = await prisma.whatsappSession.findUnique({
-            where: { id: options.session }
-        });
-        if (!session) return;
-
-        const authDir = path.join(process.cwd(), '.wwebjs_auth');
-        if (!fs.existsSync(authDir)) fs.mkdirSync(authDir);
-
-        const filePath = path.join(authDir, `session-${options.session}.zip`);
-        fs.writeFileSync(filePath, session.data);
-    }
-
-    async delete(options) {
-        await prisma.whatsappSession.delete({
-            where: { id: options.session }
-        }).catch(() => {}); // Ignorar si no existe
-    }
-}
-
-// --- 🚀 CONFIGURACIÓN DEL CLIENTE ---
 export let botListo = false;
 export let qrActualTexto = null;
 
-// 👉 CONFIGURACIÓN CON BROWSERLESS
+// 👉 CONFIGURACIÓN CON BROWSERLESS Y GUARDADO LOCAL
 const client = new Client({
-    authStrategy: new RemoteAuth({
-        clientId: "cyn-belleza-prod",
-        store: new PrismaStore(),
-        backupSyncIntervalMs: 300000 // Sincroniza con la DB cada 5 minutos
-    }),
-    puppeteer: {
-        // 👇 Chau Browserless, usamos el navegador enano de Alpine
-        executablePath: '/usr/bin/chromium-browser',
-        headless: true,
-        args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage", // Salva la memoria en Render
-            "--disable-gpu",
-            "--disable-extensions"
-        ],
-    },
-    authTimeoutMs: 180000,
-});
-
-client.on("remote_session_saved", () => {
-    console.log("✨ ¡Sesión persistida en PostgreSQL exitosamente!");
+  authStrategy: new LocalAuth(),
+  puppeteer: {
+    browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
+    headless: true,
+  },
+  authTimeoutMs: 180000,
 });
 
 client.on("qr", (qr) => {
-    console.log("⚠️ Nuevo QR generado. Escanealo para guardarlo en la DB.");
-    qrActualTexto = qr;
+  console.log("⚠️ Nuevo QR generado. Entrá a /api/bot/qr para escanearlo.");
+  qrActualTexto = qr;
 });
 
 client.on("ready", () => {
-    console.log("✅ Bot de WhatsApp listo y persistente en la nube.");
-    qrActualTexto = null;
-    botListo = true;
+  console.log("✅ Bot de WhatsApp listo y en la nube (vía Browserless).");
+  qrActualTexto = null;
+  botListo = true;
 });
 
 client.on("disconnected", (reason) => {
-    botListo = false;
-    console.log("❌ Bot desconectado:", reason);
+  botListo = false;
+  console.log("❌ Bot desconectado:", reason);
 });
 
 client.initialize().catch((error) => {
-    console.error("❌ Error inicializando:", error.message);
+  console.error("❌ Error inicializando:", error.message);
 });
 
-// --- EL RESTO DE TUS FUNCIONES (enviarNotificacionTurno, etc.) SIGUEN IGUAL ---
-
+// --- FUNCIONES DE ENVÍO ---
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const enviarNotificacionTurno = async (turno) => {
-  if (!botListo) {
-    console.log(
-      "⚠️ Intento de envío cancelado: El bot de WhatsApp no está listo.",
-    );
-    return;
-  }
+  if (!botListo) return;
 
   try {
     const fecha = new Date(turno.fechaHora).toLocaleDateString("es-AR");
@@ -115,8 +49,8 @@ export const enviarNotificacionTurno = async (turno) => {
       minute: "2-digit",
     });
     const nombreServicio = turno.servicio?.nombre || "Tratamiento";
-
     const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
+
     const msjCyn =
       `📢 *Nuevo Turno Web*\n\n` +
       `👤 Cliente: ${turno.clienteManual || turno.cliente?.nombre}\n` +
@@ -140,7 +74,6 @@ export const enviarNotificacionTurno = async (turno) => {
 
     if (telefonoCliente) {
       let numeroLimpio = telefonoCliente.toString().replace(/\D/g, "");
-
       if (numeroLimpio.startsWith("0"))
         numeroLimpio = numeroLimpio.substring(1);
       if (numeroLimpio.includes("15") && numeroLimpio.length > 10) {
@@ -160,10 +93,10 @@ export const enviarNotificacionTurno = async (turno) => {
         `💸 *Alias:* ${aliasMP}\n\n` +
         `📝 *Nuestra Política de Turnos:*\n` +
         `Podés reprogramar o cancelar sin perder tu seña avisándonos con al menos *24 horas de anticipación*.\n\n` +
-        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.`;
+        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.`
+        `Desde ya muchas gracias por elegirnos, ¡te esperamos para que disfrutes de tu experiencia de belleza! 🌸`;  ;
 
       await client.sendMessage(jidCliente, msjCliente);
-      console.log("✅ Mensaje enviado al cliente correctamente.");
     }
   } catch (error) {
     console.error("❌ Error enviando mensaje de WhatsApp:", error.message);
@@ -172,7 +105,6 @@ export const enviarNotificacionTurno = async (turno) => {
 
 const enviarRecordatoriosProgramados = async () => {
   if (!botListo) return;
-  console.log("⏰ Revisando turnos para enviar recordatorios...");
   try {
     const mañana = new Date();
     mañana.setDate(mañana.getDate() + 1);
@@ -192,6 +124,8 @@ const enviarRecordatoriosProgramados = async () => {
       let telefonoCliente = "";
       if (turno.clienteManual && turno.clienteManual.includes("Tel: ")) {
         telefonoCliente = turno.clienteManual.split("Tel: ")[1].trim();
+      } else if (turno.cliente?.telefono) {
+        telefonoCliente = turno.cliente.telefono;
       }
 
       if (telefonoCliente) {
@@ -249,9 +183,6 @@ export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
     const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
     await client.sendMessage(numeroCyn, mensaje);
   } catch (error) {
-    console.error(
-      "No se pudo enviar el aviso de cancelación a Cyn:",
-      error.message,
-    );
+    console.error("No se pudo enviar aviso de cancelación:", error.message);
   }
 };
