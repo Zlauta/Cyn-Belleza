@@ -72,7 +72,6 @@ const client = new Client({
     authTimeoutMs: 180000,
 });
 
-// Evento especial: se dispara cuando la sesión ya viajó a la DB de Neon
 client.on("remote_session_saved", () => {
     console.log("✨ ¡Sesión persistida en PostgreSQL exitosamente!");
 });
