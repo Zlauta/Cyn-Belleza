@@ -6,22 +6,19 @@ import cron from "node-cron";
 export let botListo = false;
 export let qrActualTexto = null;
 
-// 👉 TODO LOCAL, TODO LIVIANO
+// 👉 MODO BESTIA (RAILWAY): Libre de restricciones de memoria
 const client = new Client({
-  authStrategy: new LocalAuth(), // Guardamos la sesión en Render
+  authStrategy: new LocalAuth(), 
   puppeteer: {
-    executablePath: "/usr/bin/chromium-browser", // Usamos el navegador de Alpine
+    executablePath: "/usr/bin/chromium-browser", // Mantenemos la ruta de Alpine
     headless: true,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage", // Clave para que la RAM de Render no explote
-      "--disable-gpu",
-      "--disable-extensions",
-      "--single-process", // Obligamos a Chrome a usar un solo hilo para ahorrar memoria
+      // ¡Volamos el --single-process y todas las limitaciones extremas de RAM!
     ],
   },
-  authTimeoutMs: 180000,
+  authTimeoutMs: 180000, 
 });
 
 client.on("qr", (qr) => {
@@ -30,7 +27,7 @@ client.on("qr", (qr) => {
 });
 
 client.on("ready", () => {
-  console.log("✅ Bot de WhatsApp listo y en la nube (vía Browserless).");
+  console.log("✅ Bot de WhatsApp listo, persistente y con memoria de sobra en Railway!");
   qrActualTexto = null;
   botListo = true;
 });
@@ -91,6 +88,7 @@ export const enviarNotificacionTurno = async (turno) => {
       const jidCliente = `549${numeroLimpio}@c.us`;
       const aliasMP = process.env.ALIAS_CYN_BELLEZA;
 
+      // 👉 BUG ARREGLADO ACÁ ABAJO (Estaba mal concatenado el texto)
       const msjCliente =
         `¡Hola! ✨ Gracias por elegir *CYN Belleza*.\n\n` +
         `Hemos pre-agendado tu turno para *${nombreServicio}*:\n` +
@@ -101,7 +99,8 @@ export const enviarNotificacionTurno = async (turno) => {
         `💸 *Alias:* ${aliasMP}\n\n` +
         `📝 *Nuestra Política de Turnos:*\n` +
         `Podés reprogramar o cancelar sin perder tu seña avisándonos con al menos *24 horas de anticipación*.\n\n` +
-        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.``Desde ya muchas gracias por elegirnos, ¡te esperamos para que disfrutes de tu experiencia de belleza! 🌸`;
+        `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.\n\n` +
+        `Desde ya muchas gracias por elegirnos, ¡te esperamos para que disfrutes de tu experiencia de belleza! 🌸`;
 
       await client.sendMessage(jidCliente, msjCliente);
     }

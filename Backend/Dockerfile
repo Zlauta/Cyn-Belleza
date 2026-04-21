@@ -17,4 +17,5 @@ RUN npm install
 RUN npx prisma generate
 COPY . .
 EXPOSE 5000
-CMD ["node", "--max-old-space-size=250", "src/server.js"]
+
+CMD ["npm", "start"]
