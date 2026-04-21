@@ -8,19 +8,25 @@ import { qrActualTexto } from "./services/whatsapp.service.js";
 import qrcode from "qrcode";
 
 const app = express();
-app.set("trust proxy", 1); // Si el backend va a estar detrás de un proxy (ej: Heroku, Nginx), esto es importante para que el rate limiter funcione correctamente con las IPs reales de los clientes
+app.set("trust proxy", 1);
 app.use(express.json());
-// Middlewares globales
-app.use(cors({
-  origin: process.env.APP_URL,
-  credentials: true
-}));
+
+app.use(
+  cors({
+    origin: process.env.APP_URL,
+    credentials: true,
+  }),
+);
 
 app.use(morgan("dev"));
-
 app.use(limiterGlobal);
 
-// Rutas
+// 👉 LA RUTA DEL DESPERTADOR (Para UptimeRobot)
+app.get("/ping", (req, res) => {
+  res.status(200).send("Servidor de CYN Belleza despierto ⏰");
+});
+
+// Rutas principales
 app.use("/api", routes);
 
 app.get("/api/bot/qr", async (req, res) => {
@@ -31,7 +37,6 @@ app.get("/api/bot/qr", async (req, res) => {
   }
 
   try {
-    // Transformamos el texto en una imagen real
     const qrImagenBase64 = await qrcode.toDataURL(qrActualTexto);
     res.send(`
       <div style="display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column; background-color:#f3f4f6;">
@@ -44,8 +49,6 @@ app.get("/api/bot/qr", async (req, res) => {
   }
 });
 
-// Manejador de errores global siempre al final de todo
 app.use(manejadorErrores);
 
-// Exportamos la app configurada pero SIN encender el servidor
 export default app;
