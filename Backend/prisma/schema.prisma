@@ -41,7 +41,7 @@ model Turno {
   fechaHora DateTime
   estado    Estado   @default(PENDIENTE)
 
-  estadoPago EstadoPago @default(PENDIENTE)
+  estadoPago    EstadoPago @default(PENDIENTE)
   transaccionId String?
 
   recordatorioEnviado Boolean @default(false)
@@ -49,10 +49,16 @@ model Turno {
   clienteId Int?
   cliente   Usuarios? @relation("Turnos", fields: [clienteId], references: [id])
 
- clienteManual String?
+  clienteManual String?
 
   servicioId Int
   servicio   Servicios @relation(fields: [servicioId], references: [id])
+}
+
+model WhatsappSession {
+  id        String   @id
+  data      Bytes // 👉 Almacena el archivo comprimido de la sesión
+  updatedAt DateTime @updatedAt
 }
 
 enum Estado {
