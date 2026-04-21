@@ -10,23 +10,28 @@ const ModalServicio = ({
   onSubmitForm,
   categorias,
 }) => {
-  const { register, handleSubmit, reset } = useForm();
+  const valoresPorDefecto = {
+    nombre: "",
+    categoria: "Peluquería",
+    precio: "",
+    duracion: "",
+    descripcion: "",
+    estado: "Activo",
+  };
+  const { register, handleSubmit, reset } = useForm({
+    // Si hay un servicio para editar, lo usa. Si no, usa los valores en blanco.
+    values: servicioAEditar ? servicioAEditar : valoresPorDefecto,
+    resetOptions: {
+      keepDirtyValues: false, // Esto asegura que si abrís otro servicio, se limpie perfecto
+    },
+  });
 
-  // Resetear el formulario cuando se abre/cierra o cambia el servicio a editar
+  // (Opcional pero recomendado para limpiar al cerrar)
   useEffect(() => {
-    if (servicioAEditar) {
-      reset(servicioAEditar);
-    } else {
-      reset({
-        categoria: "Peluquería",
-        estado: "Activo",
-        nombre: "",
-        precio: "",
-        duracion: "",
-        descripcion: "",
-      });
+    if (!abierto) {
+      reset(valoresPorDefecto);
     }
-  }, [servicioAEditar, abierto, reset]);
+  }, [abierto, reset]);
 
   return (
     <AnimatePresence>

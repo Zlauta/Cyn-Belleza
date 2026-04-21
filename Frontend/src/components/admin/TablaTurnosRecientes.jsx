@@ -55,7 +55,7 @@ const TablaTurnosRecientes = ({ turnos, setTurnos, navigate }) => {
         </button>
       </div>
 
-      <div className="overflow-visible">
+      <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50/50 text-xs uppercase tracking-wider text-gray-500 font-bold border-b border-gray-100">
