@@ -10,12 +10,20 @@ RUN apk add --no-cache \
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
+
+# 1. Copiamos solo los package para instalar dependencias
 COPY package*.json ./
-COPY prisma/schema.prisma ./prisma/
 RUN npm install
-RUN npx prisma generate
+
+# 2. Copiamos TODO tu código de una (incluida la carpeta prisma esté donde esté)
 COPY . .
+
+# 3. Ahora que ya tiene todo el código, generamos Prisma
+RUN npx prisma generate
+
 EXPOSE 5000
 
+# 4. Arrancamos
 CMD ["npm", "start"]
