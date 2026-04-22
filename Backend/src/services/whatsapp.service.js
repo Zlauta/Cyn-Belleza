@@ -22,17 +22,22 @@ const client = new Client({
   puppeteer: {
     executablePath: "/usr/bin/chromium-browser",
     headless: true,
-    protocolTimeout: 300000, // 👉 LA SOLUCIÓN: Le damos 5 minutos de paciencia a Puppeteer
+    protocolTimeout: 300000, 
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--blink-settings=imagesEnabled=false",
       "--disable-dev-shm-usage",
-      "--disable-gpu", // Ayuda a que Chromium no busque placas de video en el servidor
-      "--no-zygote", // Evita que procesos fantasmas cuelguen el navegador
+      "--disable-gpu",
+      "--no-zygote"
     ],
   },
   authTimeoutMs: 180000,
+  // 👉 EL ESCUDO: Obliga a WhatsApp a usar una versión compatible que no congela a Chromium
+  webVersionCache: {
+    type: "remote",
+    remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
+  },
 });
 
 client.on("qr", (qr) => {
