@@ -2,12 +2,31 @@ import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 import { prisma } from "../db.js";
 import cron from "node-cron";
+import fs from "fs";      // 👉 AGREGAR ESTO
+import path from "path";  // 👉 AGREGAR ESTO
 
 export let botListo = false;
 export let qrActualTexto = null;
 
+// 👉 NUEVO: Limpiador automático de candados de Chromium
+const authPath = path.join(process.cwd(), ".wwebjs_auth", "session");
+const lockFiles = ["SingletonLock", "SingletonCookie", "SingletonSocket"];
+
+lockFiles.forEach((file) => {
+  const filePath = path.join(authPath, file);
+  if (fs.existsSync(filePath)) {
+    try {
+      fs.unlinkSync(filePath);
+      console.log(`🧹 Limpieza: ${file} borrado para destrabar Chrome.`);
+    } catch (e) {
+      console.error(`No se pudo borrar ${file}`, e);
+    }
+  }
+});
+
+// 👉 MODO BESTIA (RAILWAY): Libre de restricciones de memoria
 const client = new Client({
-  authStrategy: new LocalAuth(),
+  authStrategy: new LocalAuth(), 
   puppeteer: {
     executablePath: "/usr/bin/chromium-browser",
     headless: true,
