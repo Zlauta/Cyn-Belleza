@@ -11,11 +11,14 @@ const client = new Client({
   puppeteer: {
     executablePath: "/usr/bin/chromium-browser",
     headless: true,
+    protocolTimeout: 300000, // 👉 LA SOLUCIÓN: Le damos 5 minutos de paciencia a Puppeteer
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--blink-settings=imagesEnabled=false", // 👉 LA MAGIA: Bloquea todas las imágenes y ahorra muchísima RAM
+      "--blink-settings=imagesEnabled=false",
       "--disable-dev-shm-usage",
+      "--disable-gpu", // Ayuda a que Chromium no busque placas de video en el servidor
+      "--no-zygote", // Evita que procesos fantasmas cuelguen el navegador
     ],
   },
   authTimeoutMs: 180000,
