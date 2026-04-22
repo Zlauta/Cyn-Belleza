@@ -6,19 +6,19 @@ import cron from "node-cron";
 export let botListo = false;
 export let qrActualTexto = null;
 
-// 👉 MODO BESTIA (RAILWAY): Libre de restricciones de memoria
 const client = new Client({
-  authStrategy: new LocalAuth(), 
+  authStrategy: new LocalAuth(),
   puppeteer: {
-    executablePath: "/usr/bin/chromium-browser", // Mantenemos la ruta de Alpine
+    executablePath: "/usr/bin/chromium-browser",
     headless: true,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      // ¡Volamos el --single-process y todas las limitaciones extremas de RAM!
+      "--blink-settings=imagesEnabled=false", // 👉 LA MAGIA: Bloquea todas las imágenes y ahorra muchísima RAM
+      "--disable-dev-shm-usage",
     ],
   },
-  authTimeoutMs: 180000, 
+  authTimeoutMs: 180000,
 });
 
 client.on("qr", (qr) => {
@@ -27,7 +27,9 @@ client.on("qr", (qr) => {
 });
 
 client.on("ready", () => {
-  console.log("✅ Bot de WhatsApp listo, persistente y con memoria de sobra en Railway!");
+  console.log(
+    "✅ Bot de WhatsApp listo, persistente y con memoria de sobra en Railway!",
+  );
   qrActualTexto = null;
   botListo = true;
 });

@@ -15,7 +15,7 @@ const ModalUsuario = ({ abierto, cerrar, usuarioAEditar, onSubmitForm }) => {
     if (usuarioAEditar) {
       reset({ ...usuarioAEditar, contrasenia: "" });
     } else {
-      reset({ nombre: "", email: "", contrasenia: "", rol: "CLIENTE" });
+      reset({ nombre: "", email: "", contrasenia: "", rol: "CLIENTE", telefono: "" });
     }
   }, [usuarioAEditar, abierto, reset]);
 
@@ -55,59 +55,114 @@ const ModalUsuario = ({ abierto, cerrar, usuarioAEditar, onSubmitForm }) => {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nombre Completo
                 </label>
-                <input
-                  {...register("nombre", {
-                    required: "El nombre es obligatorio",
-                  })}
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User
+                      className={`h-5 w-5 ${errors.nombre ? "text-red-400" : "text-gray-400"}`}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    {...register("nombre", {
+                      required: "El nombre es obligatorio",
+                    })}
+                    className={`block w-full pl-10 pr-3 py-3 border ${errors.nombre ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-black"} rounded-lg transition-colors`}
+                    placeholder="Juan Pérez"
+                  />
+                </div>
                 {errors.nombre && (
-                  <span className="text-xs text-red-500">
+                  <p className="mt-1 text-sm text-red-500">
                     {errors.nombre.message}
-                  </span>
+                  </p>
                 )}
               </div>
 
+              {/* Input Email */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Correo Electrónico
                 </label>
-                <input
-                  {...register("email", {
-                    required: "El email es obligatorio",
-                  })}
-                  type="email"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail
+                      className={`h-5 w-5 ${errors.email ? "text-red-400" : "text-gray-400"}`}
+                    />
+                  </div>
+                  <input
+                    type="email"
+                    {...register("email", {
+                      required: "El email es obligatorio",
+                      pattern: {
+                        value: /^\S+@\S+$/i,
+                        message: "Formato de email inválido",
+                      },
+                    })}
+                    className={`block w-full pl-10 pr-3 py-3 border ${errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-black"} rounded-lg transition-colors`}
+                    placeholder="ejemplo@correo.com"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
+              {/* Input Teléfono */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Contraseña{" "}
-                  {usuarioAEditar && (
-                    <span className="text-xs text-gray-400 font-normal">
-                      (Opcional)
-                    </span>
-                  )}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Teléfono
                 </label>
-                <input
-                  {...register("contrasenia", {
-                    required: !usuarioAEditar
-                      ? "La contraseña es obligatoria"
-                      : false,
-                  })}
-                  type="password"
-                  placeholder={usuarioAEditar ? "********" : ""}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone
+                      className={`h-5 w-5 ${errors.telefono ? "text-red-400" : "text-gray-400"}`}
+                    />
+                  </div>
+                  <input
+                    type="tel"
+                    {...register("telefono", {
+                      required: "El teléfono es obligatorio",
+                    })}
+                    className={`block w-full pl-10 pr-3 py-3 border ${errors.telefono ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-black"} rounded-lg transition-colors`}
+                    placeholder="+54 381 123 4567"
+                  />
+                </div>
+                {errors.telefono && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.telefono.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Input Contraseña */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock
+                      className={`h-5 w-5 ${errors.contrasenia ? "text-red-400" : "text-gray-400"}`}
+                    />
+                  </div>
+                  <input
+                    type="password"
+                    {...register("contrasenia", {
+                      required: "La contraseña es obligatoria",
+                      minLength: { value: 6, message: "Mínimo 6 caracteres" },
+                    })}
+                    className={`block w-full pl-10 pr-3 py-3 border ${errors.contrasenia ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-black"} rounded-lg transition-colors`}
+                    placeholder="••••••••"
+                  />
+                </div>
                 {errors.contrasenia && (
-                  <span className="text-xs text-red-500">
+                  <p className="mt-1 text-sm text-red-500">
                     {errors.contrasenia.message}
-                  </span>
+                  </p>
                 )}
               </div>
 
