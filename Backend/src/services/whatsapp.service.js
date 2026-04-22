@@ -2,27 +2,19 @@ import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 import { prisma } from "../db.js";
 import cron from "node-cron";
-import fs from "fs";      // 👉 AGREGAR ESTO
-import path from "path";  // 👉 AGREGAR ESTO
+import { execSync } from "child_process"; // 👉 Importamos el ejecutor de comandos de Linux
 
 export let botListo = false;
 export let qrActualTexto = null;
 
-// 👉 NUEVO: Limpiador automático de candados de Chromium
-const authPath = path.join(process.cwd(), ".wwebjs_auth", "session");
-const lockFiles = ["SingletonLock", "SingletonCookie", "SingletonSocket"];
-
-lockFiles.forEach((file) => {
-  const filePath = path.join(authPath, file);
-  if (fs.existsSync(filePath)) {
-    try {
-      fs.unlinkSync(filePath);
-      console.log(`🧹 Limpieza: ${file} borrado para destrabar Chrome.`);
-    } catch (e) {
-      console.error(`No se pudo borrar ${file}`, e);
-    }
-  }
-});
+// 👉 LIMPIEZA BRUTAL: Borra cualquier candado en la carpeta principal o en Default
+try {
+  execSync("rm -f .wwebjs_auth/session/Singleton*");
+  execSync("rm -f .wwebjs_auth/session/Default/Singleton*");
+  console.log("🧹 Limpieza de candados completada por consola Linux.");
+} catch (e) {
+  // Si tira error es porque no existían, así que no hacemos nada
+}
 
 // 👉 MODO BESTIA (RAILWAY): Libre de restricciones de memoria
 const client = new Client({
