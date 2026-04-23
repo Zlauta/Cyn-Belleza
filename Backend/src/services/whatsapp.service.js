@@ -2,45 +2,41 @@ import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 import { prisma } from "../db.js";
 import cron from "node-cron";
-import { execSync } from "child_process"; // 👉 Importamos el ejecutor de comandos de Linux
+import { execSync } from "child_process";
 
 export let botListo = false;
 export let qrActualTexto = null;
 
-// 👉 LIMPIEZA BRUTAL: Borra cualquier candado en la carpeta principal o en Default
 try {
   execSync("rm -f .wwebjs_auth/session/Singleton*");
   execSync("rm -f .wwebjs_auth/session/Default/Singleton*");
   console.log("🧹 Limpieza de candados completada por consola Linux.");
-} catch (e) {
-  // Si tira error es porque no existían, así que no hacemos nada
-}
+} catch (e) {}
 
 const client = new Client({
-  authStrategy: new LocalAuth(), 
+  authStrategy: new LocalAuth(),
   puppeteer: {
     executablePath: "/usr/bin/chromium-browser",
     headless: true,
-    protocolTimeout: 300000, 
+    protocolTimeout: 300000,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
+      "--blink-settings=imagesEnabled=false",
       "--disable-dev-shm-usage",
       "--disable-gpu",
       "--no-zygote",
-      "--blink-settings=imagesEnabled=false",
-      // 👇 MAGIA NUEVA: Prohibido dormir la pestaña
+      "--single-process",
       "--disable-background-timer-throttling",
       "--disable-backgrounding-occluded-windows",
       "--disable-renderer-backgrounding",
-      "--disable-web-security", // Evita bloqueos internos de la página de WhatsApp
-      "--disable-features=IsolateOrigins,site-per-process"
     ],
   },
   authTimeoutMs: 180000,
   webVersionCache: {
     type: "remote",
-    remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
+    remotePath:
+      "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3745.1007.html",
   },
 });
 
@@ -60,6 +56,9 @@ client.on("ready", () => {
 client.on("disconnected", (reason) => {
   botListo = false;
   console.log("❌ Bot desconectado:", reason);
+  setTimeout(() => {
+    client.initialize().catch(console.error);
+  }, 5000);
 });
 
 client.initialize().catch((error) => {
@@ -68,6 +67,16 @@ client.initialize().catch((error) => {
 
 // --- FUNCIONES DE ENVÍO ---
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// 👇 FIX: Timeout manual para evitar que sendMessage congele el proceso
+const enviarConTimeout = (jid, mensaje, ms = 30000) => {
+  return Promise.race([
+    client.sendMessage(jid, mensaje),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout manual sendMessage")), ms),
+    ),
+  ]);
+};
 
 export const enviarNotificacionTurno = async (turno) => {
   if (!botListo) return;
@@ -78,14 +87,8 @@ export const enviarNotificacionTurno = async (turno) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-    
-  const nombreServicio = turno.servicio?.nombre || "Tratamiento";
-    
-    // 👇 BLINDAJE: Nos aseguramos de que termine en @c.us sí o sí
-    let numeroCyn = process.env.NUMERO_CYN_BELLEZA;
-    if (!numeroCyn.includes("@c.us")) {
-      numeroCyn = `${numeroCyn}@c.us`;
-    }
+    const nombreServicio = turno.servicio?.nombre || "Tratamiento";
+    const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
 
     const msjCyn =
       `📢 *Nuevo Turno Web*\n\n` +
@@ -95,7 +98,7 @@ export const enviarNotificacionTurno = async (turno) => {
       `⏰ Hora: ${hora}\n\n` +
       `_Revisalo en tu panel de administración._`;
 
-    await client.sendMessage(numeroCyn, msjCyn);
+    await enviarConTimeout(numeroCyn, msjCyn);
     await esperar(2000);
 
     let telefonoCliente = turno.cliente?.telefono;
@@ -119,7 +122,6 @@ export const enviarNotificacionTurno = async (turno) => {
       const jidCliente = `549${numeroLimpio}@c.us`;
       const aliasMP = process.env.ALIAS_CYN_BELLEZA;
 
-      // 👉 BUG ARREGLADO ACÁ ABAJO (Estaba mal concatenado el texto)
       const msjCliente =
         `¡Hola! ✨ Gracias por elegir *CYN Belleza*.\n\n` +
         `Hemos pre-agendado tu turno para *${nombreServicio}*:\n` +
@@ -133,7 +135,7 @@ export const enviarNotificacionTurno = async (turno) => {
         `Una vez que transfieras, *respondé a este mensaje enviando el comprobante* para que tu turno quede 100% confirmado ✅.\n\n` +
         `Desde ya muchas gracias por elegirnos, ¡te esperamos para que disfrutes de tu experiencia de belleza! 🌸`;
 
-      await client.sendMessage(jidCliente, msjCliente);
+      await enviarConTimeout(jidCliente, msjCliente);
     }
   } catch (error) {
     console.error("❌ Error enviando mensaje de WhatsApp:", error.message);
@@ -179,7 +181,7 @@ const enviarRecordatoriosProgramados = async () => {
           `⏰ A las ${hora} hs.\n\n` +
           `📍 ¡Te esperamos!`;
 
-        await client.sendMessage(jidCliente, msjRecordatorio);
+        await enviarConTimeout(jidCliente, msjRecordatorio);
 
         await prisma.turno.update({
           where: { id: turno.id },
@@ -218,7 +220,7 @@ export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
     const mensaje = `⚠️ *TURNO CANCELADO* ⚠️\n\nHola Cyn, la clienta *${nombreCliente}* acaba de cancelar su turno web.\n\n✂️ *Servicio:* ${nombreServicio}\n📅 *Día:* ${fechaStr}\n⏰ *Hora:* ${horaStr} hs`;
 
     const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
-    await client.sendMessage(numeroCyn, mensaje);
+    await enviarConTimeout(numeroCyn, mensaje);
   } catch (error) {
     console.error("No se pudo enviar aviso de cancelación:", error.message);
   }
