@@ -16,7 +16,6 @@ try {
   // Si tira error es porque no existían, así que no hacemos nada
 }
 
-// 👉 MODO BESTIA (RAILWAY): Libre de restricciones de memoria
 const client = new Client({
   authStrategy: new LocalAuth(), 
   puppeteer: {
@@ -26,14 +25,19 @@ const client = new Client({
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--blink-settings=imagesEnabled=false",
       "--disable-dev-shm-usage",
       "--disable-gpu",
-      "--no-zygote"
+      "--no-zygote",
+      "--blink-settings=imagesEnabled=false",
+      // 👇 MAGIA NUEVA: Prohibido dormir la pestaña
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+      "--disable-web-security", // Evita bloqueos internos de la página de WhatsApp
+      "--disable-features=IsolateOrigins,site-per-process"
     ],
   },
   authTimeoutMs: 180000,
-  // 👉 EL ESCUDO: Obliga a WhatsApp a usar una versión compatible que no congela a Chromium
   webVersionCache: {
     type: "remote",
     remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
@@ -74,8 +78,14 @@ export const enviarNotificacionTurno = async (turno) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-    const nombreServicio = turno.servicio?.nombre || "Tratamiento";
-    const numeroCyn = process.env.NUMERO_CYN_BELLEZA;
+    
+  const nombreServicio = turno.servicio?.nombre || "Tratamiento";
+    
+    // 👇 BLINDAJE: Nos aseguramos de que termine en @c.us sí o sí
+    let numeroCyn = process.env.NUMERO_CYN_BELLEZA;
+    if (!numeroCyn.includes("@c.us")) {
+      numeroCyn = `${numeroCyn}@c.us`;
+    }
 
     const msjCyn =
       `📢 *Nuevo Turno Web*\n\n` +
