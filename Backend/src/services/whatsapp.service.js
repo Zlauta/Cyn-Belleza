@@ -74,12 +74,15 @@ const enviarConTimeout = async (jid, mensaje, ms = 30000) => {
     return await Promise.race([
       client.sendMessage(jid, mensaje),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout manual sendMessage")), ms)
+        setTimeout(() => reject(new Error("Timeout manual sendMessage")), ms),
       ),
     ]);
   } catch (error) {
     // Si el frame se destruyó, reiniciamos el cliente
-    if (error.message.includes("detached Frame") || error.message.includes("Target closed")) {
+    if (
+      error.message.includes("detached Frame") ||
+      error.message.includes("Target closed")
+    ) {
       console.log("🔄 Frame destruido detectado, reiniciando cliente...");
       botListo = false;
       setTimeout(async () => {
@@ -95,21 +98,26 @@ const enviarConTimeout = async (jid, mensaje, ms = 30000) => {
   }
 };
 
-// 👇 Pegá esto antes de enviarNotificacionTurno
 const verificarCliente = async () => {
-  try {
-    const state = await client.getState();
-    if (state !== "CONNECTED") {
-      console.log("⚠️ Cliente no conectado, estado:", state);
-      botListo = false;
-      return false;
+  for (let intento = 1; intento <= 3; intento++) {
+    try {
+      const state = await client.getState();
+      if (state === "CONNECTED") return true;
+      console.log(
+        `⚠️ Cliente no conectado, estado: ${state} (intento ${intento}/3)`,
+      );
+    } catch (e) {
+      console.log(
+        `⚠️ Cliente inaccesible (intento ${intento}/3): ${e.message}`,
+      );
     }
-    return true;
-  } catch (e) {
-    console.log("⚠️ Cliente inaccesible, marcando como no listo.");
-    botListo = false;
-    return false;
+    await esperar(2000); // Espera 2s entre intentos
   }
+
+  // Solo después de 3 fallos seguidos marcamos como no listo
+  console.log("❌ Cliente confirmado como no disponible tras 3 intentos.");
+  botListo = false;
+  return false;
 };
 
 export const enviarNotificacionTurno = async (turno) => {
