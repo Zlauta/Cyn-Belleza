@@ -68,18 +68,53 @@ client.initialize().catch((error) => {
 // --- FUNCIONES DE ENVÍO ---
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// 👇 FIX: Timeout manual para evitar que sendMessage congele el proceso
-const enviarConTimeout = (jid, mensaje, ms = 30000) => {
-  return Promise.race([
-    client.sendMessage(jid, mensaje),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Timeout manual sendMessage")), ms),
-    ),
-  ]);
+// 👇 Reemplazá la función enviarConTimeout por esta versión mejorada
+const enviarConTimeout = async (jid, mensaje, ms = 30000) => {
+  try {
+    return await Promise.race([
+      client.sendMessage(jid, mensaje),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout manual sendMessage")), ms)
+      ),
+    ]);
+  } catch (error) {
+    // Si el frame se destruyó, reiniciamos el cliente
+    if (error.message.includes("detached Frame") || error.message.includes("Target closed")) {
+      console.log("🔄 Frame destruido detectado, reiniciando cliente...");
+      botListo = false;
+      setTimeout(async () => {
+        try {
+          await client.destroy();
+        } catch (_) {}
+        setTimeout(() => {
+          client.initialize().catch(console.error);
+        }, 3000);
+      }, 1000);
+    }
+    throw error; // Re-lanza para que el catch del llamador lo loguee
+  }
+};
+
+// 👇 Pegá esto antes de enviarNotificacionTurno
+const verificarCliente = async () => {
+  try {
+    const state = await client.getState();
+    if (state !== "CONNECTED") {
+      console.log("⚠️ Cliente no conectado, estado:", state);
+      botListo = false;
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.log("⚠️ Cliente inaccesible, marcando como no listo.");
+    botListo = false;
+    return false;
+  }
 };
 
 export const enviarNotificacionTurno = async (turno) => {
   if (!botListo) return;
+  if (!(await verificarCliente())) return; // 👈 agregá esta línea
 
   try {
     const fecha = new Date(turno.fechaHora).toLocaleDateString("es-AR");
@@ -144,6 +179,7 @@ export const enviarNotificacionTurno = async (turno) => {
 
 const enviarRecordatoriosProgramados = async () => {
   if (!botListo) return;
+  if (!(await verificarCliente())) return; // Verificación adicional antes de proceder
   try {
     const mañana = new Date();
     mañana.setDate(mañana.getDate() + 1);
@@ -202,6 +238,7 @@ cron.schedule("0 9,18 * * *", () => {
 
 export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {
   if (!botListo) return;
+  if (!(await verificarCliente())) return; // Verificación adicional antes de proceder
 
   try {
     const fecha = new Date(turnoCancelado.fechaHora);
