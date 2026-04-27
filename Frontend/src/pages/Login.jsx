@@ -1,9 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext.jsx";
 
 // 👉 Importamos el servicio en lugar de axios directo
 import { loginService } from "../services/auth.services.js";
@@ -15,9 +16,11 @@ const Login = () => {
     formState: { errors },
   } = useForm();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
   const onSubmit = async (data) => {
-    const loadToast = toast.loading('Verificando credenciales...');
+    const loadToast = toast.loading("Verificando credenciales...");
 
     try {
       const respuesta = await loginService(data);
@@ -27,24 +30,25 @@ const Login = () => {
       const tokenGuardar = respuesta.datos?.token || respuesta.token;
       const usuarioGuardar = respuesta.datos?.usuario || respuesta.usuario;
 
-      if (tokenGuardar) {
-        localStorage.setItem('token', tokenGuardar);
-      } else {
-        toast.error("Error: El servidor no devolvió el token", { id: loadToast });
-        return; // Cortamos la ejecución si no hay token
-      }
-
-      if (usuarioGuardar) {
+      if (tokenGuardar && usuarioGuardar) {
         // Aseguramos que el rol esté en mayúsculas por si acaso
         if (usuarioGuardar.rol) {
           usuarioGuardar.rol = usuarioGuardar.rol.toUpperCase();
         }
-        localStorage.setItem('usuario', JSON.stringify(usuarioGuardar));
+
+        // Usar el contexto de autenticación
+        login(tokenGuardar, usuarioGuardar);
+
+        toast.success("¡Bienvenido/a de nuevo!", { id: loadToast });
+
+        // Redirect post-login: verificar si hay ruta guardada
+        const destino = location.state?.from || "/";
+        navigate(destino, { replace: true });
+      } else {
+        toast.error("Error: El servidor no devolvió credenciales válidas", {
+          id: loadToast,
+        });
       }
-
-      toast.success('¡Bienvenido/a de nuevo!', { id: loadToast });
-      navigate('/'); 
-
     } catch (error) {
       toast.error(error.message, { id: loadToast });
     }

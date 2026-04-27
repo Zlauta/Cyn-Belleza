@@ -68,15 +68,17 @@ export const crear = async (req, res, next) => {
 export const obtenerTodos = async (req, res, next) => {
   try {
     let filtro = {};
+    const pagina = parseInt(req.query.pagina) || 1;
+    const limite = parseInt(req.query.limite) || 20;
 
     // Si NO es admin, le mostramos SOLO los turnos que él mismo pidió
     if (req.usuario.rol !== "ADMIN") {
-      filtro = { usuarioId: req.usuario.id };
+      filtro = { clienteId: req.usuario.id };
     }
     // Si es admin, el filtro queda vacío ({}) y le trae los de todo el mundo
 
-    const turnos = await turnoService.obtenerTurnos(filtro);
-    res.status(200).json(turnos);
+    const resultado = await turnoService.obtenerTurnos(filtro, pagina, limite);
+    res.status(200).json({ exito: true, ...resultado });
   } catch (error) {
     next(error);
   }

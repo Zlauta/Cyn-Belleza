@@ -242,6 +242,8 @@ const enviarRecordatoriosProgramados = async () => {
 
 cron.schedule("0 9,18 * * *", () => {
   enviarRecordatoriosProgramados();
+}, {
+  timezone: "America/Argentina/Buenos_Aires"
 });
 
 export const enviarAlertaCancelacionAdmin = async (turnoCancelado) => {

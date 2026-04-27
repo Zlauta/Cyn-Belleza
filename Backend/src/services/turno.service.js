@@ -125,15 +125,32 @@ export const crearTurno = async (usuarioSolicitante, datos) => {
   return nuevoTurno;
 };
 
-export const obtenerTurnos = async (filtro = {}) => {
-  return await prisma.turno.findMany({
-    where: filtro,
-    include: {
-      servicio: true,
-      cliente: { select: { nombre: true, email: true } },
+export const obtenerTurnos = async (filtro = {}, pagina = 1, limite = 20) => {
+  const skip = (pagina - 1) * limite;
+  
+  const [turnos, total] = await Promise.all([
+    prisma.turno.findMany({
+      where: filtro,
+      include: {
+        servicio: true,
+        cliente: { select: { nombre: true, email: true } },
+      },
+      orderBy: { fechaHora: "asc" },
+      skip,
+      take: limite,
+    }),
+    prisma.turno.count({ where: filtro }),
+  ]);
+
+  return {
+    datos: turnos,
+    paginacion: {
+      total,
+      pagina,
+      limite,
+      totalPaginas: Math.ceil(total / limite),
     },
-    orderBy: { fechaHora: "asc" },
-  });
+  };
 };
 
 export const obtenerTurnoPorId = async (id) => {

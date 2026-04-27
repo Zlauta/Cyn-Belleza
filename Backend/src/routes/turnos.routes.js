@@ -3,7 +3,7 @@ import * as turnoController from '../controller/turno.controller.js';
 import { verificarToken, esAdministrador } from '../middleware/auth.middleware.js';
 import { validarEsquema } from '../middleware/validador.middleware.js';
 import { crearTurnoSchema, actualizarEstadoTurnoSchema } from '../schemas/turno.schemas.js';
-import { limiterTurnos } from '../middleware/rateLimit.Middleware.js';
+import { limiterTurnos } from '../middleware/rateLimit.middleware.js';
 
 export const rutasTurnos = Router();
 // Ventanilla pública para que el cliente consulte qué horas hay libres

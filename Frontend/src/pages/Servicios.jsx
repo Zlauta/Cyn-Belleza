@@ -7,11 +7,11 @@ import { obtenerServiciosPublicos } from "../services/reservas.service.js";
 const obtenerImagenPorCategoria = (categoria) => {
   const imagenes = {
     Peluquería:
-      "/assets/Peluqueria.jpeg",
+      "/assets/Peluqueria.webp",
     "Manicura y Pedicura":
-      "/assets/Uñas.png",
+      "/assets/Unas.webp",
     "Estética Facial":
-      "/assets/Maquillaje2.png",
+      "/assets/Maquillaje2.webp",
     default:
       "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?q=80&w=400",
   };

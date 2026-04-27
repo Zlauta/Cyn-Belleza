@@ -83,10 +83,28 @@ export const autenticarUsuario = async (email, contrasenia) => {
   };
 };
 
-export const obtenerTodosLosUsuarios = async () => {
-  return await prisma.usuarios.findMany({
-    select: { id: true, nombre: true, email: true, rol: true, telefono: true },
-  });
+export const obtenerTodosLosUsuarios = async (pagina = 1, limite = 20) => {
+  const skip = (pagina - 1) * limite;
+  
+  const [usuarios, total] = await Promise.all([
+    prisma.usuarios.findMany({
+      select: { id: true, nombre: true, email: true, rol: true, telefono: true },
+      skip,
+      take: limite,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.usuarios.count(),
+  ]);
+
+  return {
+    datos: usuarios,
+    paginacion: {
+      total,
+      pagina,
+      limite,
+      totalPaginas: Math.ceil(total / limite),
+    },
+  };
 };
 
 export const eliminarUsuario = async (id) => {

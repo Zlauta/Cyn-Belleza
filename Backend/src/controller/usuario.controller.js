@@ -21,8 +21,11 @@ export const login = async (req, res, next) => {
 
 export const obtenerTodos = async (req, res, next) => {
   try {
-    const usuarios = await usuarioService.obtenerTodosLosUsuarios();
-    res.status(200).json({ exito: true, datos: usuarios });
+    const pagina = parseInt(req.query.pagina) || 1;
+    const limite = parseInt(req.query.limite) || 20;
+    
+    const resultado = await usuarioService.obtenerTodosLosUsuarios(pagina, limite);
+    res.status(200).json({ exito: true, ...resultado });
   } catch (error) {
     next(error);
   }

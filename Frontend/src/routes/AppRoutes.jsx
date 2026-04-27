@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { useAuth } from "../context/AuthContext.jsx";
 
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -22,25 +23,20 @@ const PublicLayout = ({ children }) => (
     <Footer />
   </div>
 );
-// 👉 EL PATOVICA REAL
 const RutaProtegida = ({ children, requiereAdmin = false }) => {
-  // 1. Buscamos las credenciales
-  const token = localStorage.getItem("token");
-  const usuarioString = localStorage.getItem("usuario");
-  const usuario = usuarioString ? JSON.parse(usuarioString) : null;
+  const { token, esAdmin } = useAuth();
+  const location = useLocation();
 
-  // 2. Si no hay token, lo mandamos al Login directo
+  // Si no hay token, redirigir al login guardando la ruta
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // 3. Si la ruta es exclusiva de Admin y el usuario es un Cliente normal
-  // Nota: Asegurate de que en tu base de datos el rol se llame exactamente 'ADMIN'
-  if (requiereAdmin && usuario?.rol !== "ADMIN") {
-    return <Navigate to="/" replace />; // Lo devolvemos al inicio, no tiene permiso
+  // Si la ruta es exclusiva de Admin y el usuario no es admin
+  if (requiereAdmin && !esAdmin) {
+    return <Navigate to="/" replace />;
   }
 
-  // 4. Si pasa todos los filtros, lo dejamos ver la pantalla
   return children;
 };
 
