@@ -78,7 +78,7 @@ const Home = () => {
       <header className="relative bg-gray-900 text-white border-b-[6px] border-pink-600 flex flex-col justify-center min-h-[75vh] lg:min-h-[85vh]">
         <div className="absolute inset-0 opacity-40">
           <img
-            src="/assets/Hero.webp"
+            src="/assets/Hero.png"
             alt="Salón de belleza"
             className="w-full h-full object-cover"
           />
