@@ -13,8 +13,6 @@ export const crear = async (req, res, next) => {
 
 export const obtenerTodos = async (req, res, next) => {
   try {
-    // 👉 ACÁ ESTÁ EL CAMBIO: Le pasamos 'false' explícitamente
-    // Esto le dice al servicio: "No quiero solo los activos, traeme TODOS"
     const servicios = await servicioService.obtenerServicios(false);
 
     res.status(200).json({ exito: true, datos: servicios });
@@ -34,16 +32,10 @@ export const obtenerPorId = async (req, res, next) => {
 
 export const actualizar = async (req, res, next) => {
   try {
-    // 🕵️‍♂️ LOS DETECTIVES: Imprimimos en la consola de Render lo que llega
-    console.log(`\n📩 === INTENTANDO EDITAR SERVICIO ID: ${req.params.id} ===`);
-    console.log("📦 BODY RECIBIDO EN EXPRESS:", req.body);
-    console.log("===================================================\n");
-
     const servicioActualizado = await servicioService.actualizarServicio(
       req.params.id,
       req.body,
     );
-    console.log("✨ RESULTADO REAL DE LA DB:", servicioActualizado);
     res
       .status(200)
       .json({ message: "Servicio actualizado", servicio: servicioActualizado });

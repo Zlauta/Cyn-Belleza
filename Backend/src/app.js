@@ -11,14 +11,12 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(express.json());
 
-app.use(
-  cors({
-    origin: process.env.APP_URL,
-    credentials: true,
-  }),
-);
+app.use(cors({
+  origin: process.env.APP_URL,
+  credentials: true,
+}));
 
-app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use(morgan(process.env.NODE_ENV === "production" ? "dev" : "combined"));
 app.use(limiterGlobal);
 
 // 👉 LA RUTA DEL DESPERTADOR (Para UptimeRobot)

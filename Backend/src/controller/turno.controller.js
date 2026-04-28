@@ -18,7 +18,6 @@ export const obtenerMisTurnos = async (req, res, next) => {
     // Usamos req.usuario.id (que viene de tu auth.middleware)
     const turnos = await turnoService.obtenerMisTurnos(req.usuario.id);
 
-    // Lo mandamos con el mismo formato que armamos en el frontend ({ exito: true, datos: ... })
     res.status(200).json({ exito: true, datos: turnos });
   } catch (error) {
     next(error);
@@ -71,11 +70,9 @@ export const obtenerTodos = async (req, res, next) => {
     const pagina = parseInt(req.query.pagina) || 1;
     const limite = parseInt(req.query.limite) || 20;
 
-    // Si NO es admin, le mostramos SOLO los turnos que él mismo pidió
     if (req.usuario.rol !== "ADMIN") {
       filtro = { clienteId: req.usuario.id };
     }
-    // Si es admin, el filtro queda vacío ({}) y le trae los de todo el mundo
 
     const resultado = await turnoService.obtenerTurnos(filtro, pagina, limite);
     res.status(200).json({ exito: true, ...resultado });

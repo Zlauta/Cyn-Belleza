@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom"; // Sacamos useNavigate porque usaremos window.location
+import { Link } from "react-router-dom"; 
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { registroService, loginService } from "../services/auth.services.js";

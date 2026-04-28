@@ -162,33 +162,24 @@ export const obtenerTurnoPorId = async (id) => {
   return turno;
 };
 
-// 🔥 EDICIÓN COMPLETA (Solo para Admin) 🔥
 export const actualizarTurnoCompleto = async (id, datos) => {
-  // 1. Verificamos que el turno exista
   await obtenerTurnoPorId(id);
 
-  // 2. Armamos el paquete básico de actualización
   const dataActualizada = {
     fechaHora: datos.fechaHora ? new Date(datos.fechaHora) : undefined,
     servicioId: datos.servicioId ? parseInt(datos.servicioId) : undefined,
     estado: datos.estado,
   };
 
-  // 👉 3. ESCUDO ANTI-BORRADO DE IDs
-  // Solo cambiamos al cliente si viene una orden estricta del frontend
   if (datos.clienteId) {
-    // Si viene un ID válido, vinculamos y limpiamos el texto manual
     dataActualizada.clienteId = parseInt(datos.clienteId);
     dataActualizada.clienteManual = null;
   } else if (datos.clienteId === null && datos.clienteManual) {
-    // 🔥 MAGIA ACÁ: Solo lo convertimos a "Manual" (y borramos el ID)
-    // SI el frontend mandó explícitamente que el clienteId es null.
-    // Si el frontend simplemente se olvidó de mandarlo (undefined), Prisma NO lo borra.
     dataActualizada.clienteManual = datos.clienteManual;
     dataActualizada.clienteId = null;
   }
 
-  // 4. Guardamos en Prisma y devolvemos
+
   return await prisma.turno.update({
     where: { id: parseInt(id) },
     data: dataActualizada,
@@ -209,11 +200,6 @@ export const actualizarEstado = async (id, datosActualizacion) => {
   });
 };
 
-// 🔥 LA REGLA DE ORO DE LAS 24 HORAS 🔥
-// 👉 Asegurate de importar la función nueva arriba de todo:
-// import { enviarAlertaCancelacionAdmin } from "./whatsapp.service.js";
-
-// 🔥 LA REGLA DE ORO DE LAS 24 HORAS 🔥
 export const cancelarTurno = async (id, clienteId, rolUsuario) => {
   const turno = await obtenerTurnoPorId(id);
 
@@ -247,9 +233,6 @@ export const cancelarTurno = async (id, clienteId, rolUsuario) => {
     }
   });
 
-  // 👉 2. MANDAMOS EL WHATSAPP A TU MAMÁ
-  // Le ponemos el .catch para que si el celu de tu mamá no tiene internet o 
-  // el bot se desconectó, el turno se cancele igual en la página web y no tire error.
   enviarAlertaCancelacionAdmin(turnoActualizado).catch((err) =>
     console.log("Fallo silenciado del bot al cancelar:", err.message),
   );
@@ -258,10 +241,9 @@ export const cancelarTurno = async (id, clienteId, rolUsuario) => {
 };
 
 export const eliminarTurnoFisico = async (id) => {
-  // 1. Verificamos que exista antes de intentar borrar
+
   await obtenerTurnoPorId(id);
 
-  // 2. Lo borramos definitivamente de la base de datos
   return await prisma.turno.delete({
     where: { id: parseInt(id) },
   });
