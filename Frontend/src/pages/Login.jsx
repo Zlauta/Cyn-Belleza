@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext.jsx";
 
-// 👉 Importamos el servicio en lugar de axios directo
 import { loginService } from "../services/auth.services.js";
 
 const Login = () => {
@@ -24,24 +23,18 @@ const Login = () => {
 
     try {
       const respuesta = await loginService(data);
-      console.log("👀 DATA DEL BACKEND:", respuesta);
-
-      // 👉 ACÁ ESTÁ LA MAGIA: Apuntamos a respuesta.datos
       const tokenGuardar = respuesta.datos?.token || respuesta.token;
       const usuarioGuardar = respuesta.datos?.usuario || respuesta.usuario;
 
       if (tokenGuardar && usuarioGuardar) {
-        // Aseguramos que el rol esté en mayúsculas por si acaso
         if (usuarioGuardar.rol) {
           usuarioGuardar.rol = usuarioGuardar.rol.toUpperCase();
         }
 
-        // Usar el contexto de autenticación
         login(tokenGuardar, usuarioGuardar);
 
         toast.success("¡Bienvenido/a de nuevo!", { id: loadToast });
 
-        // Redirect post-login: verificar si hay ruta guardada
         const destino = location.state?.from || "/";
         navigate(destino, { replace: true });
       } else {
@@ -62,7 +55,6 @@ const Login = () => {
       transition={{ duration: 0.4, ease: "easeInOut" }}
       className="min-h-screen flex bg-white"
     >
-      {/* 🖼️ Mitad Izquierda: Imagen */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/50 z-10"></div>
         <img

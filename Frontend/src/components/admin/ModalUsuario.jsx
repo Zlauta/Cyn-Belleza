@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
-import { X } from "lucide-react";
+import { Lock, Mail, Phone, User, X } from "lucide-react";
 
 const ModalUsuario = ({ abierto, cerrar, usuarioAEditar, onSubmitForm }) => {
   const {
